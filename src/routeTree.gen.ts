@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedMovimentacoesRouteImport } from './routes/_authenticated/movimentacoes'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as VeiculosCodeRegistroRouteImport } from './routes/veiculos.$code.registro'
 
@@ -29,6 +30,12 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedMovimentacoesRoute =
+  AuthenticatedMovimentacoesRouteImport.update({
+    id: '/movimentacoes',
+    path: '/movimentacoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   id: '/painel',
   path: '/painel',
@@ -43,12 +50,14 @@ const VeiculosCodeRegistroRoute = VeiculosCodeRegistroRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/veiculos/$code/registro': typeof VeiculosCodeRegistroRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/veiculos/$code/registro': typeof VeiculosCodeRegistroRoute
 }
@@ -57,19 +66,22 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/veiculos/$code/registro': typeof VeiculosCodeRegistroRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/painel' | '/veiculos/$code/registro'
+  fullPaths:
+    '/' | '/auth' | '/movimentacoes' | '/painel' | '/veiculos/$code/registro'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/painel' | '/veiculos/$code/registro'
+  to: '/' | '/auth' | '/movimentacoes' | '/painel' | '/veiculos/$code/registro'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/movimentacoes'
     | '/_authenticated/painel'
     | '/veiculos/$code/registro'
   fileRoutesById: FileRoutesById
@@ -104,6 +116,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/movimentacoes': {
+      id: '/_authenticated/movimentacoes'
+      path: '/movimentacoes'
+      fullPath: '/movimentacoes'
+      preLoaderRoute: typeof AuthenticatedMovimentacoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/painel': {
       id: '/_authenticated/painel'
       path: '/painel'
@@ -122,10 +141,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedMovimentacoesRoute: typeof AuthenticatedMovimentacoesRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedMovimentacoesRoute: AuthenticatedMovimentacoesRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
 }
 
