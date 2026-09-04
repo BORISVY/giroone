@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedMotoristasRouteImport } from './routes/_authenticated/motoristas'
 import { Route as AuthenticatedMovimentacoesRouteImport } from './routes/_authenticated/movimentacoes'
 import { Route as AuthenticatedOcorrenciasRouteImport } from './routes/_authenticated/ocorrencias'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
@@ -32,6 +33,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedMotoristasRoute = AuthenticatedMotoristasRouteImport.update({
+  id: '/motoristas',
+  path: '/motoristas',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMovimentacoesRoute =
   AuthenticatedMovimentacoesRouteImport.update({
@@ -70,6 +76,7 @@ const VeiculosCodeRegistroRoute = VeiculosCodeRegistroRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/motoristas': typeof AuthenticatedMotoristasRoute
   '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/ocorrencias': typeof AuthenticatedOcorrenciasRoute
   '/painel': typeof AuthenticatedPainelRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/motoristas': typeof AuthenticatedMotoristasRoute
   '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/ocorrencias': typeof AuthenticatedOcorrenciasRoute
   '/painel': typeof AuthenticatedPainelRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/motoristas': typeof AuthenticatedMotoristasRoute
   '/_authenticated/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/_authenticated/ocorrencias': typeof AuthenticatedOcorrenciasRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/motoristas'
     | '/movimentacoes'
     | '/ocorrencias'
     | '/painel'
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/motoristas'
     | '/movimentacoes'
     | '/ocorrencias'
     | '/painel'
@@ -125,6 +136,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/motoristas'
     | '/_authenticated/movimentacoes'
     | '/_authenticated/ocorrencias'
     | '/_authenticated/painel'
@@ -162,6 +174,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/motoristas': {
+      id: '/_authenticated/motoristas'
+      path: '/motoristas'
+      fullPath: '/motoristas'
+      preLoaderRoute: typeof AuthenticatedMotoristasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/movimentacoes': {
       id: '/_authenticated/movimentacoes'
@@ -222,6 +241,7 @@ const AuthenticatedVeiculosRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedMotoristasRoute: typeof AuthenticatedMotoristasRoute
   AuthenticatedMovimentacoesRoute: typeof AuthenticatedMovimentacoesRoute
   AuthenticatedOcorrenciasRoute: typeof AuthenticatedOcorrenciasRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
@@ -229,6 +249,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedMotoristasRoute: AuthenticatedMotoristasRoute,
   AuthenticatedMovimentacoesRoute: AuthenticatedMovimentacoesRoute,
   AuthenticatedOcorrenciasRoute: AuthenticatedOcorrenciasRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
