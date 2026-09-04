@@ -100,7 +100,7 @@ function RegistroPage() {
         p_type: effectiveType,
         p_km: Number(km),
         p_reason: reason,
-        p_notes: notes || null,
+        p_notes: notes ? notes : undefined,
       });
       if (error) throw new Error(error.message);
       return result;

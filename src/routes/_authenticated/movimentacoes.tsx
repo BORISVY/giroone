@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/fleet/AppShell";
 import { PeriodPicker } from "@/components/fleet/PeriodPicker";
-import { MovementPill } from "@/components/fleet/StatusPill";
+import { MovementTypePill } from "@/components/fleet/StatusPill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -183,7 +183,7 @@ function Movimentacoes() {
                 <tr key={m.id} className="border-b border-border/60 last:border-0">
                   <td className="p-3 whitespace-nowrap">{fmtDateTime(m.occurred_at)}</td>
                   <td className="p-3">
-                    <MovementPill type={m.type} />
+                    <MovementTypePill type={m.type} />
                   </td>
                   <td className="p-3">{vName(m.vehicle_id)}</td>
                   <td className="p-3">{dName(m.driver_id)}</td>
