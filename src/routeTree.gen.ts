@@ -16,6 +16,7 @@ import { Route as AuthenticatedMovimentacoesRouteImport } from './routes/_authen
 import { Route as AuthenticatedOcorrenciasRouteImport } from './routes/_authenticated/ocorrencias'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedVeiculosRouteImport } from './routes/_authenticated/veiculos'
+import { Route as AuthenticatedVeiculosCodeRouteImport } from './routes/_authenticated/veiculos.$code'
 import { Route as VeiculosCodeRegistroRouteImport } from './routes/veiculos.$code.registro'
 
 const IndexRoute = IndexRouteImport.update({
@@ -54,6 +55,12 @@ const AuthenticatedVeiculosRoute = AuthenticatedVeiculosRouteImport.update({
   path: '/veiculos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedVeiculosCodeRoute =
+  AuthenticatedVeiculosCodeRouteImport.update({
+    id: '/$code',
+    path: '/$code',
+    getParentRoute: () => AuthenticatedVeiculosRoute,
+  } as any)
 const VeiculosCodeRegistroRoute = VeiculosCodeRegistroRouteImport.update({
   id: '/veiculos/$code/registro',
   path: '/veiculos/$code/registro',
@@ -66,7 +73,8 @@ export interface FileRoutesByFullPath {
   '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/ocorrencias': typeof AuthenticatedOcorrenciasRoute
   '/painel': typeof AuthenticatedPainelRoute
-  '/veiculos': typeof AuthenticatedVeiculosRoute
+  '/veiculos': typeof AuthenticatedVeiculosRouteWithChildren
+  '/veiculos/$code': typeof AuthenticatedVeiculosCodeRoute
   '/veiculos/$code/registro': typeof VeiculosCodeRegistroRoute
 }
 export interface FileRoutesByTo {
@@ -75,7 +83,8 @@ export interface FileRoutesByTo {
   '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/ocorrencias': typeof AuthenticatedOcorrenciasRoute
   '/painel': typeof AuthenticatedPainelRoute
-  '/veiculos': typeof AuthenticatedVeiculosRoute
+  '/veiculos': typeof AuthenticatedVeiculosRouteWithChildren
+  '/veiculos/$code': typeof AuthenticatedVeiculosCodeRoute
   '/veiculos/$code/registro': typeof VeiculosCodeRegistroRoute
 }
 export interface FileRoutesById {
@@ -86,7 +95,8 @@ export interface FileRoutesById {
   '/_authenticated/movimentacoes': typeof AuthenticatedMovimentacoesRoute
   '/_authenticated/ocorrencias': typeof AuthenticatedOcorrenciasRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
-  '/_authenticated/veiculos': typeof AuthenticatedVeiculosRoute
+  '/_authenticated/veiculos': typeof AuthenticatedVeiculosRouteWithChildren
+  '/_authenticated/veiculos/$code': typeof AuthenticatedVeiculosCodeRoute
   '/veiculos/$code/registro': typeof VeiculosCodeRegistroRoute
 }
 export interface FileRouteTypes {
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/ocorrencias'
     | '/painel'
     | '/veiculos'
+    | '/veiculos/$code'
     | '/veiculos/$code/registro'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/ocorrencias'
     | '/painel'
     | '/veiculos'
+    | '/veiculos/$code'
     | '/veiculos/$code/registro'
   id:
     | '__root__'
@@ -117,6 +129,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ocorrencias'
     | '/_authenticated/painel'
     | '/_authenticated/veiculos'
+    | '/_authenticated/veiculos/$code'
     | '/veiculos/$code/registro'
   fileRoutesById: FileRoutesById
 }
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVeiculosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/veiculos/$code': {
+      id: '/_authenticated/veiculos/$code'
+      path: '/$code'
+      fullPath: '/veiculos/$code'
+      preLoaderRoute: typeof AuthenticatedVeiculosCodeRouteImport
+      parentRoute: typeof AuthenticatedVeiculosRoute
+    }
     '/veiculos/$code/registro': {
       id: '/veiculos/$code/registro'
       path: '/veiculos/$code/registro'
@@ -188,18 +208,31 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedVeiculosRouteChildren {
+  AuthenticatedVeiculosCodeRoute: typeof AuthenticatedVeiculosCodeRoute
+}
+
+const AuthenticatedVeiculosRouteChildren: AuthenticatedVeiculosRouteChildren = {
+  AuthenticatedVeiculosCodeRoute: AuthenticatedVeiculosCodeRoute,
+}
+
+const AuthenticatedVeiculosRouteWithChildren =
+  AuthenticatedVeiculosRoute._addFileChildren(
+    AuthenticatedVeiculosRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedMovimentacoesRoute: typeof AuthenticatedMovimentacoesRoute
   AuthenticatedOcorrenciasRoute: typeof AuthenticatedOcorrenciasRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
-  AuthenticatedVeiculosRoute: typeof AuthenticatedVeiculosRoute
+  AuthenticatedVeiculosRoute: typeof AuthenticatedVeiculosRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMovimentacoesRoute: AuthenticatedMovimentacoesRoute,
   AuthenticatedOcorrenciasRoute: AuthenticatedOcorrenciasRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
-  AuthenticatedVeiculosRoute: AuthenticatedVeiculosRoute,
+  AuthenticatedVeiculosRoute: AuthenticatedVeiculosRouteWithChildren,
 }
 
 const AuthenticatedRouteRouteWithChildren =
