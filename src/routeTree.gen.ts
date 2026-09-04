@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedMovimentacoesRouteImport } from './routes/_authenticated/movimentacoes'
+import { Route as AuthenticatedOcorrenciasRouteImport } from './routes/_authenticated/ocorrencias'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as VeiculosCodeRegistroRouteImport } from './routes/veiculos.$code.registro'
 
@@ -36,6 +37,12 @@ const AuthenticatedMovimentacoesRoute =
     path: '/movimentacoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedOcorrenciasRoute =
+  AuthenticatedOcorrenciasRouteImport.update({
+    id: '/ocorrencias',
+    path: '/ocorrencias',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   id: '/painel',
   path: '/painel',
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
+  '/ocorrencias': typeof AuthenticatedOcorrenciasRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/veiculos/$code/registro': typeof VeiculosCodeRegistroRoute
 }
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
+  '/ocorrencias': typeof AuthenticatedOcorrenciasRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/veiculos/$code/registro': typeof VeiculosCodeRegistroRoute
 }
@@ -67,21 +76,34 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/movimentacoes': typeof AuthenticatedMovimentacoesRoute
+  '/_authenticated/ocorrencias': typeof AuthenticatedOcorrenciasRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/veiculos/$code/registro': typeof VeiculosCodeRegistroRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/movimentacoes' | '/painel' | '/veiculos/$code/registro'
+    | '/'
+    | '/auth'
+    | '/movimentacoes'
+    | '/ocorrencias'
+    | '/painel'
+    | '/veiculos/$code/registro'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/movimentacoes' | '/painel' | '/veiculos/$code/registro'
+  to:
+    | '/'
+    | '/auth'
+    | '/movimentacoes'
+    | '/ocorrencias'
+    | '/painel'
+    | '/veiculos/$code/registro'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/movimentacoes'
+    | '/_authenticated/ocorrencias'
     | '/_authenticated/painel'
     | '/veiculos/$code/registro'
   fileRoutesById: FileRoutesById
@@ -123,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMovimentacoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/ocorrencias': {
+      id: '/_authenticated/ocorrencias'
+      path: '/ocorrencias'
+      fullPath: '/ocorrencias'
+      preLoaderRoute: typeof AuthenticatedOcorrenciasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/painel': {
       id: '/_authenticated/painel'
       path: '/painel'
@@ -142,11 +171,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedMovimentacoesRoute: typeof AuthenticatedMovimentacoesRoute
+  AuthenticatedOcorrenciasRoute: typeof AuthenticatedOcorrenciasRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMovimentacoesRoute: AuthenticatedMovimentacoesRoute,
+  AuthenticatedOcorrenciasRoute: AuthenticatedOcorrenciasRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
 }
 
