@@ -145,7 +145,7 @@ function Painel() {
         </section>
 
         <section className="grid gap-4 lg:grid-cols-3">
-          <Panel title="🏆 Melhor qualidade de lançamento">
+          <Panel title="Melhor qualidade de lançamento">
             <RankList
               items={bestQuality.map((d) => ({
                 key: d.id,
@@ -155,7 +155,7 @@ function Painel() {
               }))}
             />
           </Panel>
-          <Panel title="⚠️ Maior taxa de erro">
+          <Panel title="Maior taxa de erro">
             <RankList
               items={worstQuality.map((d) => ({
                 key: d.id,
@@ -166,7 +166,7 @@ function Painel() {
               emptyText="Nenhum erro registrado no período."
             />
           </Panel>
-          <Panel title="🚗 Motoristas que mais rodaram">
+          <Panel title="Motoristas que mais rodaram">
             <RankList
               items={topKmDrivers.map((d) => ({
                 key: d.id,
@@ -179,7 +179,7 @@ function Painel() {
         </section>
 
         <section className="grid gap-4 lg:grid-cols-3">
-          <Panel title="🚙 Veículos mais utilizados">
+          <Panel title="Veículos mais utilizados">
             <RankList
               items={topUsed.map((v) => ({
                 key: v.id,
@@ -189,7 +189,7 @@ function Painel() {
               }))}
             />
           </Panel>
-          <Panel title="🛣️ Veículos que mais rodaram">
+          <Panel title="Veículos que mais rodaram">
             <RankList
               items={topKmVehicles.map((v) => ({
                 key: v.id,
@@ -199,7 +199,7 @@ function Painel() {
               }))}
             />
           </Panel>
-          <Panel title="💸 Maior custo por KM">
+          <Panel title="Maior custo por KM">
             <RankList
               items={topCostKm.map((v) => ({
                 key: v.id,
