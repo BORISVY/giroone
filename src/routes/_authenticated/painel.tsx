@@ -145,7 +145,7 @@ function Painel() {
         </section>
 
         <section className="grid gap-4 lg:grid-cols-3">
-          <Panel title="🏆 Melhor qualidade de lançamento">
+          <Panel title="Melhor qualidade de lançamento">
             <RankList
               items={bestQuality.map((d) => ({
                 key: d.id,
@@ -155,7 +155,7 @@ function Painel() {
               }))}
             />
           </Panel>
-          <Panel title="⚠️ Maior taxa de erro">
+          <Panel title="Maior taxa de erro">
             <RankList
               items={worstQuality.map((d) => ({
                 key: d.id,
@@ -166,7 +166,7 @@ function Painel() {
               emptyText="Nenhum erro registrado no período."
             />
           </Panel>
-          <Panel title="🚗 Motoristas que mais rodaram">
+          <Panel title="Motoristas que mais rodaram">
             <RankList
               items={topKmDrivers.map((d) => ({
                 key: d.id,
@@ -179,7 +179,7 @@ function Painel() {
         </section>
 
         <section className="grid gap-4 lg:grid-cols-3">
-          <Panel title="🚙 Veículos mais utilizados">
+          <Panel title="Veículos mais utilizados">
             <RankList
               items={topUsed.map((v) => ({
                 key: v.id,
@@ -189,7 +189,7 @@ function Painel() {
               }))}
             />
           </Panel>
-          <Panel title="🛣️ Veículos que mais rodaram">
+          <Panel title="Veículos que mais rodaram">
             <RankList
               items={topKmVehicles.map((v) => ({
                 key: v.id,
@@ -199,7 +199,7 @@ function Painel() {
               }))}
             />
           </Panel>
-          <Panel title="💸 Maior custo por KM">
+          <Panel title="Maior custo por KM">
             <RankList
               items={topCostKm.map((v) => ({
                 key: v.id,
@@ -219,7 +219,7 @@ function Painel() {
                 <PieChart>
                   <Pie data={a.incidentsByCategory} dataKey="value" nameKey="name" outerRadius={90} label>
                     {a.incidentsByCategory.map((_, i) => (
-                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]!} />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -272,7 +272,7 @@ function Painel() {
                     <td className="p-2 font-medium">{row.driverName}</td>
                     {fleet.vehicles.map((v) => (
                       <td key={v.id} className="p-2 text-center tabular-nums">
-                        {row.cells[v.id] ? nf.format(row.cells[v.id]) : "—"}
+                        {row.cells[v.id] ? nf.format(row.cells[v.id]!) : "—"}
                       </td>
                     ))}
                   </tr>
@@ -293,8 +293,8 @@ export function Panel({
   children,
 }: {
   title: string;
-  subtitle?: string;
-  className?: string;
+  subtitle?: string | undefined;
+  className?: string | undefined;
   children: React.ReactNode;
 }) {
   return (
@@ -311,7 +311,7 @@ function RankList({
   emptyText,
 }: {
   items: { key: string; title: string; sub: string; value: string }[];
-  emptyText?: string;
+  emptyText?: string | undefined;
 }) {
   if (!items.length) return <Empty text={emptyText} />;
   return (
@@ -332,6 +332,6 @@ function RankList({
   );
 }
 
-function Empty({ text = "Sem dados no período." }: { text?: string }) {
+function Empty({ text = "Sem dados no período." }: { text?: string | undefined }) {
   return <p className="py-8 text-center text-sm text-muted-foreground">{text}</p>;
 }
