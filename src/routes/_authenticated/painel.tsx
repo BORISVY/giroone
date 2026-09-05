@@ -272,7 +272,7 @@ function Painel() {
                     <td className="p-2 font-medium">{row.driverName}</td>
                     {fleet.vehicles.map((v) => (
                       <td key={v.id} className="p-2 text-center tabular-nums">
-                        {row.cells[v.id] ? nf.format(row.cells[v.id]) : "—"}
+                        {row.cells[v.id] ? nf.format(row.cells[v.id]!) : "—"}
                       </td>
                     ))}
                   </tr>

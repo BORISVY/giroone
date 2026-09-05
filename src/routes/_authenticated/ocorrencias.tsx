@@ -30,6 +30,7 @@ import {
   type Incident,
   type IncidentCategory,
   type IncidentStatus,
+  type Tables,
 } from "@/lib/fleet";
 
 export const Route = createFileRoute("/_authenticated/ocorrencias")({
@@ -96,7 +97,7 @@ function Ocorrencias() {
 
   const update = useMutation({
     mutationFn: async ({ incident, to }: { incident: Incident; to: IncidentStatus }) => {
-      const patch: Partial<Incident> = { status: to };
+      const patch: Tables["incidents"]["Update"] = { status: to };
       if (to === "visualizada" && !incident.viewed_at) patch["viewed_at"] = new Date().toISOString();
       if (to === "realizada" || to === "recusada") {
         patch["resolved_at"] = new Date().toISOString();
