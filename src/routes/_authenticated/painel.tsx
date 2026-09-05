@@ -219,7 +219,7 @@ function Painel() {
                 <PieChart>
                   <Pie data={a.incidentsByCategory} dataKey="value" nameKey="name" outerRadius={90} label>
                     {a.incidentsByCategory.map((_, i) => (
-                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]!} />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -293,8 +293,8 @@ export function Panel({
   children,
 }: {
   title: string;
-  subtitle?: string;
-  className?: string;
+  subtitle?: string | undefined;
+  className?: string | undefined;
   children: React.ReactNode;
 }) {
   return (
@@ -311,7 +311,7 @@ function RankList({
   emptyText,
 }: {
   items: { key: string; title: string; sub: string; value: string }[];
-  emptyText?: string;
+  emptyText?: string | undefined;
 }) {
   if (!items.length) return <Empty text={emptyText} />;
   return (
@@ -332,6 +332,6 @@ function RankList({
   );
 }
 
-function Empty({ text = "Sem dados no período." }: { text?: string }) {
+function Empty({ text = "Sem dados no período." }: { text?: string | undefined }) {
   return <p className="py-8 text-center text-sm text-muted-foreground">{text}</p>;
 }

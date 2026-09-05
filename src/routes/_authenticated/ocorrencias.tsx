@@ -96,11 +96,11 @@ function Ocorrencias() {
 
   const update = useMutation({
     mutationFn: async ({ incident, to }: { incident: Incident; to: IncidentStatus }) => {
-      const patch: Record<string, unknown> = { status: to };
-      if (to === "visualizada" && !incident.viewed_at) patch.viewed_at = new Date().toISOString();
+      const patch: Partial<Incident> = { status: to };
+      if (to === "visualizada" && !incident.viewed_at) patch["viewed_at"] = new Date().toISOString();
       if (to === "realizada" || to === "recusada") {
-        patch.resolved_at = new Date().toISOString();
-        patch.resolution_note = note || null;
+        patch["resolved_at"] = new Date().toISOString();
+        patch["resolution_note"] = note || null;
       }
       const { error } = await supabase.from("incidents").update(patch).eq("id", incident.id);
       if (error) throw new Error(error.message);

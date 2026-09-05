@@ -35,7 +35,7 @@ export const Route = createFileRoute("/_authenticated/relatorios")({
 
 function toCsv(rows: Record<string, string | number>[]) {
   if (!rows.length) return "";
-  const headers = Object.keys(rows[0]);
+  const headers = Object.keys(rows[0]!);
   const escape = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
   return [headers.join(";"), ...rows.map((r) => headers.map((h) => escape(r[h] ?? "")).join(";"))].join("\n");
 }
