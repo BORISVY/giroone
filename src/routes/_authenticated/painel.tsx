@@ -22,6 +22,7 @@ import { VehicleStatusPill } from "@/components/fleet/StatusPill";
 import { useFleet, EMPTY_FLEET } from "@/hooks/useFleet";
 import { usePeriod } from "@/hooks/usePeriod";
 import { buildAnalytics } from "@/lib/analytics";
+import { useSettings, DEFAULT_SETTINGS } from "@/hooks/useSettings";
 import { fmtDuration, fmtKm, fmtMoney, fmtPct, nf, vehicleLabel } from "@/lib/fleet";
 
 export const Route = createFileRoute("/_authenticated/painel")({
@@ -42,7 +43,9 @@ function Painel() {
   const { data, isLoading } = useFleet();
   const p = usePeriod("30d");
   const fleet = data ?? EMPTY_FLEET;
-  const a = useMemo(() => buildAnalytics(fleet, p.range), [fleet, p.range]);
+  const { data: settings } = useSettings();
+  const tolerance = settings?.trip_tolerance_hours ?? DEFAULT_SETTINGS.trip_tolerance_hours;
+  const a = useMemo(() => buildAnalytics(fleet, p.range, tolerance), [fleet, p.range, tolerance]);
 
   const topKmDrivers = [...a.drivers].filter((d) => d.movements > 0).sort((x, y) => y.km - x.km).slice(0, 5);
   const bestQuality = [...a.drivers].filter((d) => d.movements >= 1).sort((x, y) => y.quality - x.quality || y.movements - x.movements).slice(0, 5);
@@ -69,7 +72,7 @@ function Painel() {
               <div className="flex items-center gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-4">
                 <Clock className="size-5 text-destructive" />
                 <p className="text-sm font-semibold">
-                  {a.totals.pendingReturns} retorno(s) pendente(s) há mais de 12h
+                  {a.totals.pendingReturns} retorno(s) pendente(s) há mais de {tolerance}h
                 </p>
               </div>
             ) : null}
