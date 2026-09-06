@@ -20,6 +20,7 @@ import { Route as AuthenticatedOcorrenciasRouteImport } from './routes/_authenti
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedQrcodesRouteImport } from './routes/_authenticated/qrcodes'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
+import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 import { Route as AuthenticatedVeiculosRouteImport } from './routes/_authenticated/veiculos'
 import { Route as AuthenticatedVeiculosCodeRouteImport } from './routes/_authenticated/veiculos.$code'
 import { Route as VeiculosCodeRegistroRouteImport } from './routes/veiculos.$code.registro'
@@ -82,6 +83,11 @@ const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
   path: '/relatorios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedVeiculosRoute = AuthenticatedVeiculosRouteImport.update({
   id: '/veiculos',
   path: '/veiculos',
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/painel': typeof AuthenticatedPainelRoute
   '/qrcodes': typeof AuthenticatedQrcodesRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/usuarios': typeof AuthenticatedUsuariosRoute
   '/veiculos': typeof AuthenticatedVeiculosRouteWithChildren
   '/veiculos/$code': typeof AuthenticatedVeiculosCodeRoute
   '/veiculos/$code/registro': typeof VeiculosCodeRegistroRoute
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/painel': typeof AuthenticatedPainelRoute
   '/qrcodes': typeof AuthenticatedQrcodesRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/usuarios': typeof AuthenticatedUsuariosRoute
   '/veiculos': typeof AuthenticatedVeiculosRouteWithChildren
   '/veiculos/$code': typeof AuthenticatedVeiculosCodeRoute
   '/veiculos/$code/registro': typeof VeiculosCodeRegistroRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/qrcodes': typeof AuthenticatedQrcodesRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/veiculos': typeof AuthenticatedVeiculosRouteWithChildren
   '/_authenticated/veiculos/$code': typeof AuthenticatedVeiculosCodeRoute
   '/veiculos/$code/registro': typeof VeiculosCodeRegistroRoute
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/qrcodes'
     | '/relatorios'
+    | '/usuarios'
     | '/veiculos'
     | '/veiculos/$code'
     | '/veiculos/$code/registro'
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/qrcodes'
     | '/relatorios'
+    | '/usuarios'
     | '/veiculos'
     | '/veiculos/$code'
     | '/veiculos/$code/registro'
@@ -190,6 +201,7 @@ export interface FileRouteTypes {
     | '/_authenticated/painel'
     | '/_authenticated/qrcodes'
     | '/_authenticated/relatorios'
+    | '/_authenticated/usuarios'
     | '/_authenticated/veiculos'
     | '/_authenticated/veiculos/$code'
     | '/veiculos/$code/registro'
@@ -281,6 +293,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/usuarios': {
+      id: '/_authenticated/usuarios'
+      path: '/usuarios'
+      fullPath: '/usuarios'
+      preLoaderRoute: typeof AuthenticatedUsuariosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/veiculos': {
       id: '/_authenticated/veiculos'
       path: '/veiculos'
@@ -327,6 +346,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedQrcodesRoute: typeof AuthenticatedQrcodesRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
+  AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
   AuthenticatedVeiculosRoute: typeof AuthenticatedVeiculosRouteWithChildren
 }
 
@@ -339,6 +359,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedQrcodesRoute: AuthenticatedQrcodesRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
+  AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
   AuthenticatedVeiculosRoute: AuthenticatedVeiculosRouteWithChildren,
 }
 

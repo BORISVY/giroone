@@ -9,6 +9,8 @@ import {
   LogOut,
   Menu,
   QrCode,
+  Settings,
+  ShieldCheck,
   Users,
   Wrench,
   X,
@@ -16,16 +18,19 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useAccess } from "@/hooks/useAccess";
 
 const NAV = [
-  { to: "/painel", label: "Painel", icon: LayoutDashboard },
-  { to: "/movimentacoes", label: "Movimentações", icon: Activity },
-  { to: "/ocorrencias", label: "Ocorrências", icon: AlertTriangle },
-  { to: "/veiculos", label: "Veículos", icon: Car },
-  { to: "/motoristas", label: "Motoristas", icon: Users },
-  { to: "/manutencoes", label: "Manutenções", icon: Wrench },
-  { to: "/qrcodes", label: "QR Codes", icon: QrCode },
-  { to: "/relatorios", label: "Relatórios", icon: FileBarChart },
+  { to: "/painel", label: "Painel", icon: LayoutDashboard, screen: "painel" },
+  { to: "/movimentacoes", label: "Movimentações", icon: Activity, screen: "movimentacoes" },
+  { to: "/ocorrencias", label: "Ocorrências", icon: AlertTriangle, screen: "ocorrencias" },
+  { to: "/veiculos", label: "Veículos", icon: Car, screen: "veiculos" },
+  { to: "/motoristas", label: "Motoristas", icon: Users, screen: "motoristas" },
+  { to: "/manutencoes", label: "Manutenções", icon: Wrench, screen: "manutencoes" },
+  { to: "/qrcodes", label: "QR Codes", icon: QrCode, screen: "qrcodes" },
+  { to: "/relatorios", label: "Relatórios", icon: FileBarChart, screen: "relatorios" },
+  { to: "/usuarios", label: "Usuários", icon: ShieldCheck, screen: "usuarios", adminOnly: true },
+  { to: "/configuracoes", label: "Configurações", icon: Settings, screen: "configuracoes", adminOnly: true },
 ] as const;
 
 export function AppShell({
@@ -42,6 +47,7 @@ export function AppShell({
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const { isAdmin, canView } = useAccess();
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -50,7 +56,7 @@ export function AppShell({
 
   const nav = (
     <nav className="flex flex-col gap-1">
-      {NAV.map((item) => {
+      {NAV.filter((item) => ("adminOnly" in item && item.adminOnly ? isAdmin : canView(item.screen))).map((item) => {
         const Icon = item.icon;
         const active = pathname.startsWith(item.to);
         return (
