@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedManutencoesRouteImport } from './routes/_authenticated/manutencoes'
 import { Route as AuthenticatedMotoristasRouteImport } from './routes/_authenticated/motoristas'
 import { Route as AuthenticatedMovimentacoesRouteImport } from './routes/_authenticated/movimentacoes'
@@ -37,6 +38,12 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedConfiguracoesRoute =
+  AuthenticatedConfiguracoesRouteImport.update({
+    id: '/configuracoes',
+    path: '/configuracoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedManutencoesRoute =
   AuthenticatedManutencoesRouteImport.update({
     id: '/manutencoes',
@@ -95,6 +102,7 @@ const VeiculosCodeRegistroRoute = VeiculosCodeRegistroRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/manutencoes': typeof AuthenticatedManutencoesRoute
   '/motoristas': typeof AuthenticatedMotoristasRoute
   '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
@@ -109,6 +117,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/manutencoes': typeof AuthenticatedManutencoesRoute
   '/motoristas': typeof AuthenticatedMotoristasRoute
   '/movimentacoes': typeof AuthenticatedMovimentacoesRoute
@@ -125,6 +134,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/manutencoes': typeof AuthenticatedManutencoesRoute
   '/_authenticated/motoristas': typeof AuthenticatedMotoristasRoute
   '/_authenticated/movimentacoes': typeof AuthenticatedMovimentacoesRoute
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/configuracoes'
     | '/manutencoes'
     | '/motoristas'
     | '/movimentacoes'
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/configuracoes'
     | '/manutencoes'
     | '/motoristas'
     | '/movimentacoes'
@@ -170,6 +182,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/configuracoes'
     | '/_authenticated/manutencoes'
     | '/_authenticated/motoristas'
     | '/_authenticated/movimentacoes'
@@ -211,6 +224,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/configuracoes': {
+      id: '/_authenticated/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/manutencoes': {
       id: '/_authenticated/manutencoes'
@@ -299,6 +319,7 @@ const AuthenticatedVeiculosRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedManutencoesRoute: typeof AuthenticatedManutencoesRoute
   AuthenticatedMotoristasRoute: typeof AuthenticatedMotoristasRoute
   AuthenticatedMovimentacoesRoute: typeof AuthenticatedMovimentacoesRoute
@@ -310,6 +331,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedManutencoesRoute: AuthenticatedManutencoesRoute,
   AuthenticatedMotoristasRoute: AuthenticatedMotoristasRoute,
   AuthenticatedMovimentacoesRoute: AuthenticatedMovimentacoesRoute,
