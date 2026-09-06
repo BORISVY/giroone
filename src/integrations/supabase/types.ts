@@ -395,6 +395,7 @@ export type Database = {
           km: number
           notes: string | null
           occurred_at: string
+          photo_url: string | null
           reason: string | null
           trip_id: string | null
           type: Database["public"]["Enums"]["movement_type"]
@@ -410,6 +411,7 @@ export type Database = {
           km: number
           notes?: string | null
           occurred_at?: string
+          photo_url?: string | null
           reason?: string | null
           trip_id?: string | null
           type: Database["public"]["Enums"]["movement_type"]
@@ -425,6 +427,7 @@ export type Database = {
           km?: number
           notes?: string | null
           occurred_at?: string
+          photo_url?: string | null
           reason?: string | null
           trip_id?: string | null
           type?: Database["public"]["Enums"]["movement_type"]
@@ -577,6 +580,33 @@ export type Database = {
           },
         ]
       }
+      user_permissions: {
+        Row: {
+          can_edit: boolean
+          can_view: boolean
+          id: string
+          screen: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          can_edit?: boolean
+          can_view?: boolean
+          id?: string
+          screen: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          can_edit?: boolean
+          can_view?: boolean
+          id?: string
+          screen?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -660,6 +690,7 @@ export type Database = {
           p_driver_id: string
           p_km: number
           p_notes?: string
+          p_photo_url?: string
           p_reason: string
           p_type: Database["public"]["Enums"]["movement_type"]
           p_vehicle_code: string

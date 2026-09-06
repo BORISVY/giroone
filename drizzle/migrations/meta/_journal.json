@@ -8,6 +8,13 @@
       "when": 1788194969784,
       "tag": "0000_giro_fleet_core",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788692541528,
+      "tag": "0001_permissions_settings_photo",
+      "breakpoints": true
     }
   ]
 }
