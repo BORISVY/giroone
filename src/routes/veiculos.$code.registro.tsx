@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeftRight, Car, CheckCircle2, LogOut, Search } from "lucide-react";
+import { ArrowLeftRight, Camera, Car, CheckCircle2, LogOut, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -79,6 +79,8 @@ function RegistroPage() {
   const [reason, setReason] = useState("");
   const [notes, setNotes] = useState("");
   const [done, setDone] = useState<null | { type: string; km: number }>(null);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const effectiveType = type ?? suggested;
 
@@ -94,12 +96,22 @@ function RegistroPage() {
 
   const mutation = useMutation({
     mutationFn: async () => {
+      if (!photo) throw new Error("FOTO_OBRIGATORIA");
+      const ext = photo.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${code}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const upload = await supabase.storage.from("painel-fotos").upload(path, photo, {
+        contentType: photo.type || "image/jpeg",
+        upsert: false,
+      });
+      if (upload.error) throw new Error("Falha ao enviar a foto do painel. Tente novamente.");
+
       const { data: result, error } = await supabase.rpc("register_movement", {
         p_vehicle_code: code,
         p_driver_id: driverId,
         p_type: effectiveType,
         p_km: Number(km),
         p_reason: reason,
+        p_photo_url: path,
         ...(notes ? { p_notes: notes } : {}),
       });
       if (error) throw new Error(error.message);
@@ -154,6 +166,8 @@ function RegistroPage() {
             setReason("");
             setNotes("");
             setSearch("");
+            setPhoto(null);
+            setPhotoPreview(null);
           }}
         >
           Novo registro
@@ -162,7 +176,7 @@ function RegistroPage() {
     );
   }
 
-  const canSubmit = driverId && km !== "" && reason.trim() !== "" && !mutation.isPending;
+  const canSubmit = driverId && km !== "" && reason.trim() !== "" && !!photo && !mutation.isPending;
 
   return (
     <div className="min-h-screen bg-muted/40 pb-10">
@@ -276,6 +290,49 @@ function RegistroPage() {
           </div>
 
           <div className="space-y-1.5">
+            <Label htmlFor="photo">Foto do painel (obrigatória)</Label>
+            {photoPreview ? (
+              <div className="relative overflow-hidden rounded-xl border border-border">
+                <img src={photoPreview} alt="Foto do painel do veículo" className="max-h-64 w-full object-cover" />
+                <button
+                  type="button"
+                  aria-label="Remover foto"
+                  onClick={() => {
+                    setPhoto(null);
+                    setPhotoPreview(null);
+                  }}
+                  className="absolute right-2 top-2 rounded-full bg-foreground/70 p-1.5 text-background"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+            ) : (
+              <label
+                htmlFor="photo"
+                className="flex h-28 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border text-sm font-medium text-muted-foreground hover:bg-muted"
+              >
+                <Camera className="size-6" />
+                Tirar foto do odômetro
+              </label>
+            )}
+            <input
+              id="photo"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="sr-only"
+              onChange={(e) => {
+                const file = e.target.files?.[0] ?? null;
+                setPhoto(file);
+                setPhotoPreview(file ? URL.createObjectURL(file) : null);
+              }}
+            />
+            <p className="text-xs text-muted-foreground">
+              A foto precisa mostrar a quilometragem digitada acima.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
             <Label htmlFor="reason">Motivo da utilização</Label>
             <Textarea
               id="reason"
@@ -306,7 +363,7 @@ function RegistroPage() {
             disabled={!canSubmit}
             onClick={() => mutation.mutate()}
           >
-            {mutation.isPending ? "Registrando..." : `REGISTRAR ${effectiveType === "saida" ? "SAÍDA" : "RETORNO"}`}
+            {mutation.isPending ? "Enviando foto e registrando..." : `REGISTRAR ${effectiveType === "saida" ? "SAÍDA" : "RETORNO"}`}
           </Button>
         </div>
       </div>

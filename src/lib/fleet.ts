@@ -117,6 +117,7 @@ export const MOVEMENT_ERROR_MESSAGES: Record<string, string> = {
   KM_INVALIDO: "Quilometragem inválida.",
   SAIDA_DUPLICADA: "Este veículo já está EM USO. Registre o retorno antes de uma nova saída.",
   RETORNO_SEM_SAIDA: "Não existe saída aberta para este veículo.",
+  FOTO_OBRIGATORIA: "Anexe a foto do painel para concluir o registro.",
 };
 
 export function parseMovementError(message: string) {
