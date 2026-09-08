@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Trash2 } from "lucide-react";
+import { ImageIcon, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/fleet/AppShell";
@@ -50,6 +50,16 @@ function Movimentacoes() {
   const [km, setKm] = useState("");
   const [reason, setReason] = useState("");
   const [justify, setJustify] = useState("");
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+
+  async function openPhoto(path: string) {
+    const { data, error } = await supabase.storage.from("painel-fotos").createSignedUrl(path, 300);
+    if (error || !data) {
+      toast.error("Não foi possível abrir a foto.");
+      return;
+    }
+    setPhotoUrl(data.signedUrl);
+  }
 
   const rows = useMemo(
     () =>
@@ -194,6 +204,16 @@ function Movimentacoes() {
                   <td className="p-3 max-w-[16rem] truncate text-muted-foreground">{m.reason ?? "—"}</td>
                   <td className="p-3">
                     <div className="flex justify-end gap-1">
+                      {m.photo_url ? (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          title="Ver foto do painel"
+                          onClick={() => openPhoto(m.photo_url as string)}
+                        >
+                          <ImageIcon className="size-4" />
+                        </Button>
+                      ) : null}
                       <Button
                         size="icon"
                         variant="ghost"
@@ -224,6 +244,16 @@ function Movimentacoes() {
           </table>
         </div>
       </div>
+
+      <Dialog open={!!photoUrl} onOpenChange={(o) => !o && setPhotoUrl(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Foto do painel</DialogTitle>
+            <DialogDescription>Imagem enviada pelo motorista no momento do registro.</DialogDescription>
+          </DialogHeader>
+          {photoUrl ? <img src={photoUrl} alt="Foto do painel do veículo" className="w-full rounded-lg" /> : null}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent>
