@@ -37,7 +37,10 @@ function Configuracoes() {
     mutationFn: async () => {
       const { error } = await supabase
         .from("settings")
-        .upsert({ key: "geral", value: form, updated_at: new Date().toISOString() }, { onConflict: "key" });
+        .upsert(
+          { key: "geral", value: { ...form }, updated_at: new Date().toISOString() },
+          { onConflict: "key" },
+        );
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
