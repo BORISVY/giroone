@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   Car,
   FileBarChart,
+  FileSpreadsheet,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -29,6 +30,7 @@ const NAV = [
   { to: "/manutencoes", label: "Manutenções", icon: Wrench, screen: "manutencoes" },
   { to: "/qrcodes", label: "QR Codes", icon: QrCode, screen: "qrcodes" },
   { to: "/relatorios", label: "Relatórios", icon: FileBarChart, screen: "relatorios" },
+  { to: "/importacao", label: "Importar dados", icon: FileSpreadsheet, screen: "importacao", adminOnly: true },
   { to: "/usuarios", label: "Usuários", icon: ShieldCheck, screen: "usuarios", adminOnly: true },
   { to: "/configuracoes", label: "Configurações", icon: Settings, screen: "configuracoes", adminOnly: true },
 ] as const;
