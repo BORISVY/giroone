@@ -685,6 +685,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      rebuild_trips_from_movements: { Args: never; Returns: number }
       register_movement: {
         Args: {
           p_driver_id: string
