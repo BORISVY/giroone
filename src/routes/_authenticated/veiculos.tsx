@@ -76,6 +76,21 @@ function Veiculos() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await supabase
+        .from("vehicles")
+        .update({ deleted_at: new Date().toISOString(), active: false })
+        .eq("id", id);
+      if (res.error) throw new Error(res.error.message);
+    },
+    onSuccess: () => {
+      toast.success("Veículo excluído.");
+      qc.invalidateQueries({ queryKey: ["fleet"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   function edit(v: Vehicle) {
     setEditId(v.id);
     setForm({
@@ -131,6 +146,16 @@ function Veiculos() {
               </Button>
               <Button size="sm" variant="ghost" onClick={() => edit(v)}>
                 Editar
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-destructive"
+                onClick={() => {
+                  if (confirm(`Excluir o veículo ${v.plate}? O histórico será mantido.`)) remove.mutate(v.id);
+                }}
+              >
+                Excluir
               </Button>
             </div>
           </div>

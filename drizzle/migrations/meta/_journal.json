@@ -22,6 +22,13 @@
       "when": 1788692571017,
       "tag": "0002_painel_fotos_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790855112503,
+      "tag": "0003_rebuild_trips",
+      "breakpoints": true
     }
   ]
 }
