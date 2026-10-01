@@ -61,6 +61,21 @@ function Motoristas() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await supabase
+        .from("drivers")
+        .update({ deleted_at: new Date().toISOString(), active: false })
+        .eq("id", id);
+      if (res.error) throw new Error(res.error.message);
+    },
+    onSuccess: () => {
+      toast.success("Motorista excluído.");
+      qc.invalidateQueries({ queryKey: ["fleet"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   function edit(d: Driver) {
     setEditId(d.id);
     setName(d.name);
@@ -119,9 +134,19 @@ function Motoristas() {
                     <td className="p-3 tabular-nums">{d.corrected}</td>
                     <td className="p-3 tabular-nums">{fmtPct(d.errorRate, 1)}</td>
                     <td className="p-3 tabular-nums font-semibold">{fmtPct(d.quality, 0)}</td>
-                    <td className="p-3 text-right">
+                    <td className="p-3 text-right whitespace-nowrap">
                       <Button size="sm" variant="ghost" onClick={() => edit(driver)}>
                         Editar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive"
+                        onClick={() => {
+                          if (confirm(`Excluir o motorista "${driver.name}"? O histórico será mantido.`)) remove.mutate(driver.id);
+                        }}
+                      >
+                        Excluir
                       </Button>
                     </td>
                   </tr>

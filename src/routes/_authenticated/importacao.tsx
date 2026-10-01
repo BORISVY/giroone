@@ -177,6 +177,7 @@ function Importacao() {
           const { error } = await supabase.from("movements").insert(payload.slice(i, i + 200) as never);
           if (error) throw new Error(error.message);
         }
+        await supabase.rpc("rebuild_trips_from_movements");
         lines.unshift(`Movimentações: ${payload.length} importada(s)${ignored ? `, ${ignored} ignorada(s)` : ""}.`);
 
         // atualiza a quilometragem atual de cada veículo
