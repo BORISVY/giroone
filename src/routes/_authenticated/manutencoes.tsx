@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/fleet/AppShell";
@@ -47,7 +48,7 @@ const EMPTY = {
 function Manutencoes() {
   const { data } = useFleet();
   const fleet = data ?? EMPTY_FLEET;
-  const p = usePeriod("12m");
+  const p = usePeriod("tudo");
   const qc = useQueryClient();
   const a = useMemo(() => buildAnalytics(fleet, p.range), [fleet, p.range]);
 
@@ -59,10 +60,38 @@ function Manutencoes() {
   const set = (k: keyof typeof EMPTY, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   const rows = fleet.maintenance.filter((m) => inRange(m.performed_at, p.range));
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
+
+  function toggle(id: string) {
+    setSelected((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  }
+
+  function openEdit(m: (typeof rows)[number]) {
+    setEditingId(m.id);
+    setForm({
+      vehicle_id: m.vehicle_id,
+      type_id: m.type_id ?? "",
+      provider_id: m.provider_id ?? "",
+      kind: m.kind,
+      performed_at: m.performed_at,
+      amount: String(m.amount ?? ""),
+      km: m.km != null ? String(m.km) : "",
+      description: m.description ?? "",
+      notes: m.notes ?? "",
+    });
+    setOpen(true);
+  }
 
   const save = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("maintenance_records").insert({
+      const payload = {
         vehicle_id: form.vehicle_id,
         type_id: form.type_id || null,
         provider_id: form.provider_id || null,
@@ -72,17 +101,52 @@ function Manutencoes() {
         km: form.km ? Number(form.km) : null,
         description: form.description || null,
         notes: form.notes || null,
-      });
+      };
+      const { error } = editingId
+        ? await supabase.from("maintenance_records").update(payload).eq("id", editingId)
+        : await supabase.from("maintenance_records").insert(payload);
       if (error) throw new Error(error.message);
+      if (editingId)
+        await supabase.from("audit_logs").insert({ entity: "maintenance_records", entity_id: editingId, action: "update" });
     },
     onSuccess: () => {
-      toast.success("Manutenção registrada.");
+      toast.success(editingId ? "Manutenção atualizada." : "Manutenção registrada.");
       setOpen(false);
       setForm(EMPTY);
+      setEditingId(null);
       qc.invalidateQueries({ queryKey: ["fleet"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const bulkDelete = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const now = new Date().toISOString();
+      for (let i = 0; i < ids.length; i += 200) {
+        const chunk = ids.slice(i, i + 200);
+        const { error } = await supabase.from("maintenance_records").update({ deleted_at: now }).in("id", chunk);
+        if (error) throw new Error(error.message);
+      }
+      await supabase.from("audit_logs").insert({
+        entity: "maintenance_records",
+        action: "bulk_delete",
+        reason: `${ids.length} manutenção(ões) excluída(s)`,
+      });
+      return ids.length;
+    },
+    onSuccess: (n) => {
+      toast.success(`${n} manutenção(ões) excluída(s).`);
+      setSelected(new Set());
+      qc.invalidateQueries({ queryKey: ["fleet"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function confirmDelete(ids: string[]) {
+    if (!ids.length) return;
+    if (window.confirm(`Excluir ${ids.length} manutenção(ões)? Esta ação não pode ser desfeita pela tela.`))
+      bulkDelete.mutate(ids);
+  }
 
   const addType = useMutation({
     mutationFn: async () => {
@@ -113,7 +177,13 @@ function Manutencoes() {
       title="Manutenções"
       description="Custos, fornecedores e tipos de serviço"
       actions={
-        <Button onClick={() => setOpen(true)}>
+        <Button
+          onClick={() => {
+            setEditingId(null);
+            setForm(EMPTY);
+            setOpen(true);
+          }}
+        >
           <Plus className="size-4" /> Nova manutenção
         </Button>
       }
@@ -138,22 +208,50 @@ function Manutencoes() {
             <TabsTrigger value="tipos">Tipos de serviço</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="registros">
+          <TabsContent value="registros" className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={!selected.size || bulkDelete.isPending}
+                onClick={() => confirmDelete([...selected])}
+              >
+                <Trash2 className="size-4" /> Excluir selecionadas ({selected.size})
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!rows.length || bulkDelete.isPending}
+                onClick={() => confirmDelete(rows.map((r) => r.id))}
+              >
+                Excluir todas do período ({rows.length})
+              </Button>
+            </div>
             <div className="surface overflow-x-auto">
               <table className="w-full min-w-[48rem] text-sm">
                 <thead>
                   <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
+                    <th className="p-3 w-8">
+                      <Checkbox
+                        checked={allSelected}
+                        onCheckedChange={(c) => setSelected(c ? new Set(rows.map((r) => r.id)) : new Set())}
+                      />
+                    </th>
                     <th className="p-3">Data</th>
                     <th className="p-3">Veículo</th>
                     <th className="p-3">Serviço</th>
                     <th className="p-3">Fornecedor</th>
                     <th className="p-3">KM</th>
                     <th className="p-3">Valor</th>
+                    <th className="p-3" />
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((m) => (
                     <tr key={m.id} className="border-b border-border/60 last:border-0">
+                      <td className="p-3">
+                        <Checkbox checked={selected.has(m.id)} onCheckedChange={() => toggle(m.id)} />
+                      </td>
                       <td className="p-3 whitespace-nowrap">{fmtDate(m.performed_at)}</td>
                       <td className="p-3">{vehicleLabel(fleet.vehicles.find((v) => v.id === m.vehicle_id))}</td>
                       <td className="p-3">
@@ -163,11 +261,21 @@ function Manutencoes() {
                       <td className="p-3">{fleet.providers.find((x) => x.id === m.provider_id)?.name ?? "—"}</td>
                       <td className="p-3 tabular-nums">{m.km ? fmtKm(m.km) : "—"}</td>
                       <td className="p-3 tabular-nums font-medium">{fmtMoney(m.amount)}</td>
+                      <td className="p-3">
+                        <div className="flex justify-end gap-1">
+                          <Button size="icon" variant="ghost" title="Editar" onClick={() => openEdit(m)}>
+                            <Pencil className="size-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" title="Excluir" onClick={() => confirmDelete([m.id])}>
+                            <Trash2 className="size-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                   {rows.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                      <td colSpan={8} className="p-8 text-center text-muted-foreground">
                         Nenhuma manutenção no período.
                       </td>
                     </tr>
@@ -224,7 +332,7 @@ function Manutencoes() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Nova manutenção</DialogTitle>
+            <DialogTitle>{editingId ? "Editar manutenção" : "Nova manutenção"}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
@@ -303,6 +411,10 @@ function Manutencoes() {
             <div className="space-y-1.5 sm:col-span-2">
               <Label>Descrição</Label>
               <Textarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={2} />
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label>Observações</Label>
+              <Textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} />
             </div>
           </div>
           <DialogFooter>

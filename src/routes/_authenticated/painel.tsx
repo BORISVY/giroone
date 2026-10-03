@@ -41,7 +41,7 @@ const CHART_COLORS = ["var(--color-chart-1)", "var(--color-chart-2)", "var(--col
 
 function Painel() {
   const { data, isLoading } = useFleet();
-  const p = usePeriod("30d");
+  const p = usePeriod("tudo");
   const fleet = data ?? EMPTY_FLEET;
   const { data: settings } = useSettings();
   const tolerance = settings?.trip_tolerance_hours ?? DEFAULT_SETTINGS.trip_tolerance_hours;

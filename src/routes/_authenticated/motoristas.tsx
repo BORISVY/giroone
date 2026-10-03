@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/motoristas")({
 function Motoristas() {
   const { data } = useFleet();
   const fleet = data ?? EMPTY_FLEET;
-  const p = usePeriod("30d");
+  const p = usePeriod("tudo");
   const qc = useQueryClient();
   const a = useMemo(() => buildAnalytics(fleet, p.range), [fleet, p.range]);
 

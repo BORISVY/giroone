@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useFleet, EMPTY_FLEET } from "@/hooks/useFleet";
 import { usePeriod } from "@/hooks/usePeriod";
 import { inRange } from "@/lib/period";
@@ -40,7 +41,7 @@ export const Route = createFileRoute("/_authenticated/movimentacoes")({
 function Movimentacoes() {
   const { data } = useFleet();
   const fleet = data ?? EMPTY_FLEET;
-  const p = usePeriod("30d");
+  const p = usePeriod("tudo");
   const qc = useQueryClient();
 
   const [vehicleId, setVehicleId] = useState("all");
@@ -50,6 +51,12 @@ function Movimentacoes() {
   const [km, setKm] = useState("");
   const [reason, setReason] = useState("");
   const [justify, setJustify] = useState("");
+  const [eVehicle, setEVehicle] = useState("");
+  const [eDriver, setEDriver] = useState("");
+  const [eType, setEType] = useState<"saida" | "retorno">("saida");
+  const [eWhen, setEWhen] = useState("");
+  const [eNotes, setENotes] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   async function openPhoto(path: string) {
@@ -72,6 +79,22 @@ function Movimentacoes() {
       ),
     [fleet.movements, p.range, vehicleId, driverId, type],
   );
+  const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
+
+  function toggle(id: string) {
+    setSelected((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  }
+
+  function toLocalInput(iso: string) {
+    const d = new Date(iso);
+    const off = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - off).toISOString().slice(0, 16);
+  }
 
   const vName = (id: string) => vehicleLabel(fleet.vehicles.find((v) => v.id === id));
   const dName = (id: string) => fleet.drivers.find((d) => d.id === id)?.name ?? "—";
@@ -84,27 +107,23 @@ function Movimentacoes() {
         .from("movements")
         .update({
           km: newKm,
-          reason,
+          reason: reason || null,
+          notes: eNotes || null,
+          vehicle_id: eVehicle,
+          driver_id: eDriver,
+          type: eType,
+          occurred_at: new Date(eWhen).toISOString(),
           corrected: true,
           correction_count: (editing.correction_count ?? 0) + 1,
         })
         .eq("id", editing.id);
       if (error) throw new Error(error.message);
 
-      if (editing.trip_id) {
-        const trip = fleet.trips.find((t) => t.id === editing.trip_id);
-        if (trip) {
-          const patch =
-            editing.type === "saida"
-              ? { start_km: newKm, distance_km: trip.end_km != null ? Number(trip.end_km) - newKm : null }
-              : { end_km: newKm, distance_km: newKm - Number(trip.start_km) };
-          await supabase.from("trips").update(patch).eq("id", trip.id);
-        }
-      }
+      await supabase.rpc("rebuild_trips_from_movements");
 
       await supabase.from("error_events").insert({
-        vehicle_id: editing.vehicle_id,
-        driver_id: editing.driver_id,
+        vehicle_id: eVehicle,
+        driver_id: eDriver,
         movement_id: editing.id,
         kind: "correcao",
         blocked: false,
@@ -129,25 +148,36 @@ function Movimentacoes() {
   });
 
   const remove = useMutation({
-    mutationFn: async (m: Movement) => {
-      const { error } = await supabase
-        .from("movements")
-        .update({ deleted_at: new Date().toISOString() })
-        .eq("id", m.id);
-      if (error) throw new Error(error.message);
+    mutationFn: async (ids: string[]) => {
+      const now = new Date().toISOString();
+      for (let i = 0; i < ids.length; i += 200) {
+        const { error } = await supabase
+          .from("movements")
+          .update({ deleted_at: now })
+          .in("id", ids.slice(i, i + 200));
+        if (error) throw new Error(error.message);
+      }
+      await supabase.rpc("rebuild_trips_from_movements");
       await supabase.from("audit_logs").insert({
         entity: "movements",
-        entity_id: m.id,
-        action: "delete",
-        reason: "Exclusão manual pelo administrativo",
+        entity_id: ids.length === 1 ? (ids[0] ?? null) : null,
+        action: ids.length === 1 ? "delete" : "bulk_delete",
+        reason: `${ids.length} lançamento(s) excluído(s) pelo administrativo`,
       });
+      return ids.length;
     },
-    onSuccess: () => {
-      toast.success("Movimentação excluída.");
+    onSuccess: (n) => {
+      toast.success(`${n} movimentação(ões) excluída(s).`);
+      setSelected(new Set());
       qc.invalidateQueries({ queryKey: ["fleet"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  function confirmDelete(ids: string[]) {
+    if (!ids.length) return;
+    if (window.confirm(`Excluir ${ids.length} lançamento(s)? As viagens serão recalculadas.`)) remove.mutate(ids);
+  }
 
   return (
     <AppShell title="Movimentações" description={`${rows.length} lançamento(s) no período`}>
@@ -175,10 +205,35 @@ function Movimentacoes() {
           </FilterSelect>
         </div>
 
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={!selected.size || remove.isPending}
+            onClick={() => confirmDelete([...selected])}
+          >
+            <Trash2 className="size-4" /> Excluir selecionados ({selected.size})
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!rows.length || remove.isPending}
+            onClick={() => confirmDelete(rows.map((r) => r.id))}
+          >
+            Excluir todos do filtro ({rows.length})
+          </Button>
+        </div>
+
         <div className="surface overflow-x-auto">
           <table className="w-full min-w-[52rem] text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
+                <th className="p-3 w-8">
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={(c) => setSelected(c ? new Set(rows.map((r) => r.id)) : new Set())}
+                  />
+                </th>
                 <th className="p-3">Data/hora</th>
                 <th className="p-3">Tipo</th>
                 <th className="p-3">Veículo</th>
@@ -191,6 +246,9 @@ function Movimentacoes() {
             <tbody>
               {rows.map((m) => (
                 <tr key={m.id} className="border-b border-border/60 last:border-0">
+                  <td className="p-3">
+                    <Checkbox checked={selected.has(m.id)} onCheckedChange={() => toggle(m.id)} />
+                  </td>
                   <td className="p-3 whitespace-nowrap">{fmtDateTime(m.occurred_at)}</td>
                   <td className="p-3">
                     <MovementTypePill type={m.type} />
@@ -221,12 +279,17 @@ function Movimentacoes() {
                           setEditing(m);
                           setKm(String(m.km));
                           setReason(m.reason ?? "");
+                          setENotes(m.notes ?? "");
+                          setEVehicle(m.vehicle_id);
+                          setEDriver(m.driver_id);
+                          setEType(m.type);
+                          setEWhen(toLocalInput(m.occurred_at));
                           setJustify("");
                         }}
                       >
                         <Pencil className="size-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => remove.mutate(m)}>
+                      <Button size="icon" variant="ghost" onClick={() => confirmDelete([m.id])}>
                         <Trash2 className="size-4 text-destructive" />
                       </Button>
                     </div>
@@ -235,7 +298,7 @@ function Movimentacoes() {
               ))}
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={8} className="p-8 text-center text-muted-foreground">
                     Nenhuma movimentação no período/filtros.
                   </td>
                 </tr>
@@ -264,13 +327,65 @@ function Movimentacoes() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="ckm">Quilometragem</Label>
-              <Input id="ckm" inputMode="numeric" value={km} onChange={(e) => setKm(e.target.value.replace(/\D/g, ""))} />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label>Veículo</Label>
+                <Select value={eVehicle} onValueChange={setEVehicle}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fleet.vehicles.map((v) => (
+                      <SelectItem key={v.id} value={v.id}>
+                        {vehicleLabel(v)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Motorista</Label>
+                <Select value={eDriver} onValueChange={setEDriver}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fleet.drivers.map((d) => (
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Tipo</Label>
+                <Select value={eType} onValueChange={(v) => setEType(v as "saida" | "retorno")}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="saida">Saída</SelectItem>
+                    <SelectItem value="retorno">Retorno</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cwhen">Data e hora</Label>
+                <Input id="cwhen" type="datetime-local" value={eWhen} onChange={(e) => setEWhen(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ckm">Quilometragem</Label>
+                <Input id="ckm" inputMode="numeric" value={km} onChange={(e) => setKm(e.target.value.replace(/\D/g, ""))} />
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="creason">Motivo da utilização</Label>
               <Input id="creason" value={reason} onChange={(e) => setReason(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="cnotes">Observações</Label>
+              <Textarea id="cnotes" value={eNotes} onChange={(e) => setENotes(e.target.value)} rows={2} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="cjust">Justificativa da correção</Label>
