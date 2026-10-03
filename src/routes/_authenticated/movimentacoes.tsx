@@ -40,7 +40,7 @@ export const Route = createFileRoute("/_authenticated/movimentacoes")({
 function Movimentacoes() {
   const { data } = useFleet();
   const fleet = data ?? EMPTY_FLEET;
-  const p = usePeriod("30d");
+  const p = usePeriod("tudo");
   const qc = useQueryClient();
 
   const [vehicleId, setVehicleId] = useState("all");

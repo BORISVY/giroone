@@ -47,7 +47,7 @@ const EMPTY = {
 function Manutencoes() {
   const { data } = useFleet();
   const fleet = data ?? EMPTY_FLEET;
-  const p = usePeriod("12m");
+  const p = usePeriod("tudo");
   const qc = useQueryClient();
   const a = useMemo(() => buildAnalytics(fleet, p.range), [fleet, p.range]);
 

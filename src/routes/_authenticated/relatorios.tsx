@@ -54,7 +54,7 @@ function download(name: string, rows: Record<string, string | number>[]) {
 function Relatorios() {
   const { data } = useFleet();
   const fleet = data ?? EMPTY_FLEET;
-  const p = usePeriod("30d");
+  const p = usePeriod("tudo");
   const a = useMemo(() => buildAnalytics(fleet, p.range), [fleet, p.range]);
 
   const vName = (id: string | null) => vehicleLabel(fleet.vehicles.find((v) => v.id === id));
