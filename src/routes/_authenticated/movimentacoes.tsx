@@ -50,6 +50,12 @@ function Movimentacoes() {
   const [km, setKm] = useState("");
   const [reason, setReason] = useState("");
   const [justify, setJustify] = useState("");
+  const [eVehicle, setEVehicle] = useState("");
+  const [eDriver, setEDriver] = useState("");
+  const [eType, setEType] = useState<"saida" | "retorno">("saida");
+  const [eWhen, setEWhen] = useState("");
+  const [eNotes, setENotes] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   async function openPhoto(path: string) {
@@ -72,6 +78,22 @@ function Movimentacoes() {
       ),
     [fleet.movements, p.range, vehicleId, driverId, type],
   );
+  const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
+
+  function toggle(id: string) {
+    setSelected((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  }
+
+  function toLocalInput(iso: string) {
+    const d = new Date(iso);
+    const off = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - off).toISOString().slice(0, 16);
+  }
 
   const vName = (id: string) => vehicleLabel(fleet.vehicles.find((v) => v.id === id));
   const dName = (id: string) => fleet.drivers.find((d) => d.id === id)?.name ?? "—";
@@ -84,27 +106,23 @@ function Movimentacoes() {
         .from("movements")
         .update({
           km: newKm,
-          reason,
+          reason: reason || null,
+          notes: eNotes || null,
+          vehicle_id: eVehicle,
+          driver_id: eDriver,
+          type: eType,
+          occurred_at: new Date(eWhen).toISOString(),
           corrected: true,
           correction_count: (editing.correction_count ?? 0) + 1,
         })
         .eq("id", editing.id);
       if (error) throw new Error(error.message);
 
-      if (editing.trip_id) {
-        const trip = fleet.trips.find((t) => t.id === editing.trip_id);
-        if (trip) {
-          const patch =
-            editing.type === "saida"
-              ? { start_km: newKm, distance_km: trip.end_km != null ? Number(trip.end_km) - newKm : null }
-              : { end_km: newKm, distance_km: newKm - Number(trip.start_km) };
-          await supabase.from("trips").update(patch).eq("id", trip.id);
-        }
-      }
+      await supabase.rpc("rebuild_trips_from_movements");
 
       await supabase.from("error_events").insert({
-        vehicle_id: editing.vehicle_id,
-        driver_id: editing.driver_id,
+        vehicle_id: eVehicle,
+        driver_id: eDriver,
         movement_id: editing.id,
         kind: "correcao",
         blocked: false,
@@ -129,25 +147,36 @@ function Movimentacoes() {
   });
 
   const remove = useMutation({
-    mutationFn: async (m: Movement) => {
-      const { error } = await supabase
-        .from("movements")
-        .update({ deleted_at: new Date().toISOString() })
-        .eq("id", m.id);
-      if (error) throw new Error(error.message);
+    mutationFn: async (ids: string[]) => {
+      const now = new Date().toISOString();
+      for (let i = 0; i < ids.length; i += 200) {
+        const { error } = await supabase
+          .from("movements")
+          .update({ deleted_at: now })
+          .in("id", ids.slice(i, i + 200));
+        if (error) throw new Error(error.message);
+      }
+      await supabase.rpc("rebuild_trips_from_movements");
       await supabase.from("audit_logs").insert({
         entity: "movements",
-        entity_id: m.id,
-        action: "delete",
-        reason: "Exclusão manual pelo administrativo",
+        entity_id: ids.length === 1 ? ids[0] : null,
+        action: ids.length === 1 ? "delete" : "bulk_delete",
+        reason: `${ids.length} lançamento(s) excluído(s) pelo administrativo`,
       });
+      return ids.length;
     },
-    onSuccess: () => {
-      toast.success("Movimentação excluída.");
+    onSuccess: (n) => {
+      toast.success(`${n} movimentação(ões) excluída(s).`);
+      setSelected(new Set());
       qc.invalidateQueries({ queryKey: ["fleet"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  function confirmDelete(ids: string[]) {
+    if (!ids.length) return;
+    if (window.confirm(`Excluir ${ids.length} lançamento(s)? As viagens serão recalculadas.`)) remove.mutate(ids);
+  }
 
   return (
     <AppShell title="Movimentações" description={`${rows.length} lançamento(s) no período`}>
