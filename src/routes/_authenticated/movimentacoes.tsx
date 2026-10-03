@@ -160,7 +160,7 @@ function Movimentacoes() {
       await supabase.rpc("rebuild_trips_from_movements");
       await supabase.from("audit_logs").insert({
         entity: "movements",
-        entity_id: ids.length === 1 ? ids[0] : null,
+        entity_id: ids.length === 1 ? (ids[0] ?? null) : null,
         action: ids.length === 1 ? "delete" : "bulk_delete",
         reason: `${ids.length} lançamento(s) excluído(s) pelo administrativo`,
       });
