@@ -247,10 +247,22 @@ export function buildAnalytics(data: FleetDataset, range: Range, pendingReturnHo
     if (!tl.has(key)) tl.set(key, { km: 0, trips: 0, incidents: 0, cost: 0 });
     return tl.get(key)!;
   };
-  trips.forEach((t) => {
-    const b = bump(monthKey(t.started_at));
-    b.km += tripKm(t);
-    b.trips += 1;
+  // KM por mês = mesma regra do total: por veículo, última chegada − primeira saída dentro do mês
+  const perVM = new Map<string, typeof movements>();
+  movements.forEach((m) => {
+    const key = `${monthKey(m.occurred_at)}|${m.vehicle_id}`;
+    if (!perVM.has(key)) perVM.set(key, []);
+    perVM.get(key)!.push(m);
+    if (m.type === "saida") bump(monthKey(m.occurred_at)).trips += 1;
+  });
+  perVM.forEach((list, key) => {
+    const month = key.split("|")[0];
+    const sorted = [...list].sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
+    const fe = sorted.find((m) => m.type === "saida");
+    const lr = [...sorted].reverse().find((m) => m.type === "retorno");
+    if (fe && lr && lr.occurred_at >= fe.occurred_at) {
+      bump(month).km += Math.max(0, Number(lr.km) - Number(fe.km));
+    }
   });
   incidents.forEach((i) => {
     bump(monthKey(i.created_at)).incidents += 1;
