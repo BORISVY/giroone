@@ -131,7 +131,9 @@ function Painel() {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold">{vehicleLabel(v)}</p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {open ? `${open.driver} · há ${fmtDuration(open.openMs)}` : fmtKm(v.current_km)}
+                        {open
+                          ? `${open.driver} · há ${fmtDuration(open.openMs)}`
+                          : fmtKm(currentKmByVehicle.get(v.id) ?? 0)}
                       </p>
                     </div>
                     <VehicleStatusPill status={v.status} />
