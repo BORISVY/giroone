@@ -36,7 +36,7 @@ function VeiculoDetalhe() {
     const usage = trips
       .filter((t) => t.ended_at)
       .reduce((s, t) => s + (new Date(t.ended_at!).getTime() - new Date(t.started_at).getTime()), 0);
-    return { trips, movements, incidents, maint, km, cost, usage };
+    return { trips, movements, incidents, maint, km, currentKm, cost, usage };
   }, [fleet, vehicle]);
 
   if (!vehicle || !info) {
@@ -55,7 +55,7 @@ function VeiculoDetalhe() {
     >
       <div className="space-y-5">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="KM atual" value={fmtKm(vehicle.current_km)} />
+          <StatCard label="KM atual" value={fmtKm(info.currentKm)} />
           <StatCard label="KM rodados" value={fmtKm(info.km)} hint={`${info.trips.length} viagens`} />
           <StatCard label="Tempo total de uso" value={fmtDuration(info.usage)} tone="info" />
           <StatCard label="Custo de manutenção" value={fmtMoney(info.cost)} tone="accent" />
