@@ -162,7 +162,14 @@ export function buildAnalytics(data: FleetDataset, range: Range, pendingReturnHo
     const vm = movements.filter((m) => m.vehicle_id === v.id);
     const vi = incidents.filter((i) => i.vehicle_id === v.id);
     const vmaint = maintenance.filter((m) => m.vehicle_id === v.id);
-    const km = vt.reduce((s, t) => s + tripKm(t), 0);
+    // KM rodado = última chegada registrada − primeira saída registrada (no período)
+    const byTime = [...vm].sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
+    const firstExit = byTime.find((m) => m.type === "saida");
+    const lastReturn = [...byTime].reverse().find((m) => m.type === "retorno");
+    const km =
+      firstExit && lastReturn && lastReturn.occurred_at >= firstExit.occurred_at
+        ? Math.max(0, Number(lastReturn.km) - Number(firstExit.km))
+        : 0;
     const usageMs = vt.reduce((s, t) => s + tripMs(t), 0);
     const closed = vt.filter((t) => t.ended_at).length || 0;
     const cost = vmaint.reduce((s, m) => s + Number(m.amount ?? 0), 0);
@@ -295,7 +302,7 @@ export function buildAnalytics(data: FleetDataset, range: Range, pendingReturnHo
     }))
     .sort((a, b) => b.days - a.days);
 
-  const km = trips.reduce((s, t) => s + tripKm(t), 0);
+  const km = vehicles.reduce((s, v) => s + v.km, 0);
   const maintenanceCost = maintenance.reduce((s, m) => s + Number(m.amount ?? 0), 0);
 
   return {
