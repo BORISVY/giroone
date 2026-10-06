@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -45,6 +45,17 @@ function Veiculos() {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY);
+
+  // KM atual de cada veículo = maior KM já lançado (saída ou retorno), em tempo real
+  const currentKmByVehicle = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const m of fleet.movements) {
+      const km = Number(m.km);
+      if (!Number.isFinite(km)) continue;
+      if (km > (map.get(m.vehicle_id) ?? 0)) map.set(m.vehicle_id, km);
+    }
+    return map;
+  }, [fleet.movements]);
 
   const set = (k: keyof typeof EMPTY, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
