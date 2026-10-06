@@ -31,6 +31,7 @@ function VeiculoDetalhe() {
     const incidents = fleet.incidents.filter((i) => i.vehicle_id === vehicle.id);
     const maint = fleet.maintenance.filter((m) => m.vehicle_id === vehicle.id);
     const km = trips.reduce((s, t) => s + Number(t.distance_km ?? 0), 0);
+    const currentKm = movements.reduce((mx, m) => Math.max(mx, Number(m.km) || 0), 0);
     const cost = maint.reduce((s, m) => s + Number(m.amount ?? 0), 0);
     const usage = trips
       .filter((t) => t.ended_at)
