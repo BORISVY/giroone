@@ -54,7 +54,22 @@ function str(v: unknown) {
 
 function num(v: unknown) {
   if (v == null || v === "") return null;
-  const n = Number(String(v).replace(/\./g, "").replace(",", ".").replace(/[^\d.-]/g, ""));
+  // Células numéricas do Excel já chegam como número (ex.: 380.5) — não mexer.
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  let s = String(v).replace(/[^\d.,-]/g, "");
+  if (!s) return null;
+  const lastComma = s.lastIndexOf(",");
+  const lastDot = s.lastIndexOf(".");
+  if (lastComma > -1 && lastDot > -1) {
+    // O separador que aparece por último é o decimal.
+    s = lastComma > lastDot ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
+  } else if (lastComma > -1) {
+    s = s.replace(/\./g, "").replace(/,(?=[^,]*$)/, ".").replace(/,/g, "");
+  } else if (lastDot > -1) {
+    // "1.234" ou "1.234.567" = milhar; "380.5" ou "380.50" = decimal.
+    if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+  }
+  const n = Number(s);
   return Number.isFinite(n) ? n : null;
 }
 
