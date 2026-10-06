@@ -148,7 +148,7 @@ function Veiculos() {
               </div>
               <VehicleStatusPill status={v.status} />
             </div>
-            <p className="mt-3 text-sm">{fmtKm(v.current_km)}</p>
+            <p className="mt-3 text-sm">{fmtKm(currentKmByVehicle.get(v.id) ?? 0)}</p>
             <div className="mt-3 flex gap-2">
               <Button asChild size="sm" variant="outline">
                 <Link to="/veiculos/$code" params={{ code: v.code }}>
