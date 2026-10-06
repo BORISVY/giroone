@@ -47,6 +47,18 @@ function Painel() {
   const tolerance = settings?.trip_tolerance_hours ?? DEFAULT_SETTINGS.trip_tolerance_hours;
   const a = useMemo(() => buildAnalytics(fleet, p.range, tolerance), [fleet, p.range, tolerance]);
 
+  // KM atual de cada veículo = maior KM já lançado (saída ou retorno), em tempo real
+  const currentKmByVehicle = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const m of fleet.movements) {
+      const km = Number(m.km);
+      if (!Number.isFinite(km)) continue;
+      const prev = map.get(m.vehicle_id) ?? 0;
+      if (km > prev) map.set(m.vehicle_id, km);
+    }
+    return map;
+  }, [fleet.movements]);
+
   const topKmDrivers = [...a.drivers].filter((d) => d.movements > 0).sort((x, y) => y.km - x.km).slice(0, 5);
   const bestQuality = [...a.drivers].filter((d) => d.movements >= 1).sort((x, y) => y.quality - x.quality || y.movements - x.movements).slice(0, 5);
   const worstQuality = [...a.drivers].filter((d) => d.movements >= 1 && d.errorRate > 0).sort((x, y) => y.errorRate - x.errorRate).slice(0, 5);
