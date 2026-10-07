@@ -46,13 +46,15 @@ function Veiculos() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY);
 
-  // KM atual de cada veículo = maior KM já lançado (saída ou retorno), em tempo real
+  // KM atual de cada veículo = KM do lançamento mais recente (saída ou retorno)
   const currentKmByVehicle = useMemo(() => {
     const map = new Map<string, number>();
+    const at = new Map<string, number>();
     for (const m of fleet.movements) {
       const km = Number(m.km);
       if (!Number.isFinite(km)) continue;
-      if (km > (map.get(m.vehicle_id) ?? 0)) map.set(m.vehicle_id, km);
+      const t = new Date(m.occurred_at).getTime();
+      if (t >= (at.get(m.vehicle_id) ?? -Infinity)) { at.set(m.vehicle_id, t); map.set(m.vehicle_id, km); }
     }
     return map;
   }, [fleet.movements]);
