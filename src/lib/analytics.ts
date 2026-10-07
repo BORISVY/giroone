@@ -124,6 +124,34 @@ export function buildAnalytics(data: FleetDataset, range: Range, pendingReturnHo
   const tripMs = (t: (typeof trips)[number]) =>
     t.ended_at ? new Date(t.ended_at).getTime() - new Date(t.started_at).getTime() : 0;
 
+  // ---- KM por motorista: cada saída é pareada com a chegada seguinte do mesmo veículo
+  // (chegada − saída). A viagem conta para o motorista da saída, no período da saída.
+  const driverKm = new Map<string, number>();
+  {
+    const byVehicle = new Map<string, typeof data.movements>();
+    for (const m of data.movements) {
+      const arr = byVehicle.get(m.vehicle_id) ?? [];
+      arr.push(m);
+      byVehicle.set(m.vehicle_id, arr);
+    }
+    for (const arr of byVehicle.values()) {
+      arr.sort((a, b) => {
+        const d = new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime();
+        return d !== 0 ? d : (a.type === "saida" ? -1 : 1);
+      });
+      let open: (typeof arr)[number] | null = null;
+      for (const m of arr) {
+        if (m.type === "saida") open = m;
+        else if (open) {
+          const dist = Number(m.km) - Number(open.km);
+          if (dist > 0 && inRange(open.occurred_at, range))
+            driverKm.set(open.driver_id, (driverKm.get(open.driver_id) ?? 0) + dist);
+          open = null;
+        }
+      }
+    }
+  }
+
   // ---- Drivers
   const drivers: DriverMetric[] = data.drivers.map((d) => {
     const dm = movements.filter((m) => m.driver_id === d.id);
@@ -141,7 +169,7 @@ export function buildAnalytics(data: FleetDataset, range: Range, pendingReturnHo
       returns: dm.filter((m) => m.type === "retorno").length,
       movements: total,
       trips: dt.length,
-      km: dt.reduce((s, t) => s + tripKm(t), 0),
+      km: driverKm.get(d.id) ?? 0,
       corrected,
       blockedErrors: blocked,
       realErrors: real,
