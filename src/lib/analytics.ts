@@ -256,7 +256,7 @@ export function buildAnalytics(data: FleetDataset, range: Range, pendingReturnHo
     if (m.type === "saida") bump(monthKey(m.occurred_at)).trips += 1;
   });
   perVM.forEach((list, key) => {
-    const month = key.split("|")[0];
+    const month = key.split("|")[0] ?? "";
     const sorted = [...list].sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
     const fe = sorted.find((m) => m.type === "saida");
     const lr = [...sorted].reverse().find((m) => m.type === "retorno");
