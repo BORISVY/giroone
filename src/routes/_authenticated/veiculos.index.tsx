@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { useFleet, EMPTY_FLEET } from "@/hooks/useFleet";
 import { fmtKm, type Vehicle, type VehicleStatus } from "@/lib/fleet";
 
-export const Route = createFileRoute("/_authenticated/veiculos")({
+export const Route = createFileRoute("/_authenticated/veiculos/")({
   head: () => ({
     meta: [
       { title: "Veículos da frota — GIRO" },
