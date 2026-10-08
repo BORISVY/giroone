@@ -30,8 +30,11 @@ function VeiculoDetalhe() {
     const movements = fleet.movements.filter((m) => m.vehicle_id === vehicle.id);
     const incidents = fleet.incidents.filter((i) => i.vehicle_id === vehicle.id);
     const maint = fleet.maintenance.filter((m) => m.vehicle_id === vehicle.id);
-    const km = trips.reduce((s, t) => s + Number(t.distance_km ?? 0), 0);
-    const currentKm = Number([...movements].sort((a, b) => new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime())[0]?.km ?? 0);
+    const sorted = [...movements].sort((a, b) => new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime());
+    const firstExit = sorted.find((m) => m.type === "saida");
+    const lastMovement = sorted[sorted.length - 1];
+    const km = firstExit && lastMovement ? Math.max(0, Number(lastMovement.km) - Number(firstExit.km)) : 0;
+    const currentKm = Number(lastMovement?.km ?? 0);
     const cost = maint.reduce((s, m) => s + Number(m.amount ?? 0), 0);
     const usage = trips
       .filter((t) => t.ended_at)
