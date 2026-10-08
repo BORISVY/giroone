@@ -22,7 +22,7 @@ import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedQrcodesRouteImport } from './routes/_authenticated/qrcodes'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
-import { Route as AuthenticatedVeiculosRouteImport } from './routes/_authenticated/veiculos'
+import { Route as AuthenticatedVeiculosIndexRouteImport } from './routes/_authenticated/veiculos.index'
 import { Route as AuthenticatedVeiculosCodeRouteImport } from './routes/_authenticated/veiculos.$code'
 import { Route as VeiculosCodeRegistroRouteImport } from './routes/veiculos.$code.registro'
 
@@ -94,16 +94,17 @@ const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
   path: '/usuarios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedVeiculosRoute = AuthenticatedVeiculosRouteImport.update({
-  id: '/veiculos',
-  path: '/veiculos',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
+const AuthenticatedVeiculosIndexRoute =
+  AuthenticatedVeiculosIndexRouteImport.update({
+    id: '/veiculos/',
+    path: '/veiculos/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedVeiculosCodeRoute =
   AuthenticatedVeiculosCodeRouteImport.update({
-    id: '/$code',
-    path: '/$code',
-    getParentRoute: () => AuthenticatedVeiculosRoute,
+    id: '/veiculos/$code',
+    path: '/veiculos/$code',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const VeiculosCodeRegistroRoute = VeiculosCodeRegistroRouteImport.update({
   id: '/veiculos/$code/registro',
@@ -124,9 +125,9 @@ export interface FileRoutesByFullPath {
   '/qrcodes': typeof AuthenticatedQrcodesRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
-  '/veiculos': typeof AuthenticatedVeiculosRouteWithChildren
   '/veiculos/$code': typeof AuthenticatedVeiculosCodeRoute
   '/veiculos/$code/registro': typeof VeiculosCodeRegistroRoute
+  '/veiculos/': typeof AuthenticatedVeiculosIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -141,9 +142,9 @@ export interface FileRoutesByTo {
   '/qrcodes': typeof AuthenticatedQrcodesRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
-  '/veiculos': typeof AuthenticatedVeiculosRouteWithChildren
   '/veiculos/$code': typeof AuthenticatedVeiculosCodeRoute
   '/veiculos/$code/registro': typeof VeiculosCodeRegistroRoute
+  '/veiculos': typeof AuthenticatedVeiculosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -160,9 +161,9 @@ export interface FileRoutesById {
   '/_authenticated/qrcodes': typeof AuthenticatedQrcodesRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
-  '/_authenticated/veiculos': typeof AuthenticatedVeiculosRouteWithChildren
   '/_authenticated/veiculos/$code': typeof AuthenticatedVeiculosCodeRoute
   '/veiculos/$code/registro': typeof VeiculosCodeRegistroRoute
+  '/_authenticated/veiculos/': typeof AuthenticatedVeiculosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -179,9 +180,9 @@ export interface FileRouteTypes {
     | '/qrcodes'
     | '/relatorios'
     | '/usuarios'
-    | '/veiculos'
     | '/veiculos/$code'
     | '/veiculos/$code/registro'
+    | '/veiculos/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -196,9 +197,9 @@ export interface FileRouteTypes {
     | '/qrcodes'
     | '/relatorios'
     | '/usuarios'
-    | '/veiculos'
     | '/veiculos/$code'
     | '/veiculos/$code/registro'
+    | '/veiculos'
   id:
     | '__root__'
     | '/'
@@ -214,9 +215,9 @@ export interface FileRouteTypes {
     | '/_authenticated/qrcodes'
     | '/_authenticated/relatorios'
     | '/_authenticated/usuarios'
-    | '/_authenticated/veiculos'
     | '/_authenticated/veiculos/$code'
     | '/veiculos/$code/registro'
+    | '/_authenticated/veiculos/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -319,19 +320,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsuariosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/veiculos': {
-      id: '/_authenticated/veiculos'
+    '/_authenticated/veiculos/': {
+      id: '/_authenticated/veiculos/'
       path: '/veiculos'
-      fullPath: '/veiculos'
-      preLoaderRoute: typeof AuthenticatedVeiculosRouteImport
+      fullPath: '/veiculos/'
+      preLoaderRoute: typeof AuthenticatedVeiculosIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/veiculos/$code': {
       id: '/_authenticated/veiculos/$code'
-      path: '/$code'
+      path: '/veiculos/$code'
       fullPath: '/veiculos/$code'
       preLoaderRoute: typeof AuthenticatedVeiculosCodeRouteImport
-      parentRoute: typeof AuthenticatedVeiculosRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/veiculos/$code/registro': {
       id: '/veiculos/$code/registro'
@@ -342,19 +343,6 @@ declare module '@tanstack/react-router' {
     }
   }
 }
-
-interface AuthenticatedVeiculosRouteChildren {
-  AuthenticatedVeiculosCodeRoute: typeof AuthenticatedVeiculosCodeRoute
-}
-
-const AuthenticatedVeiculosRouteChildren: AuthenticatedVeiculosRouteChildren = {
-  AuthenticatedVeiculosCodeRoute: AuthenticatedVeiculosCodeRoute,
-}
-
-const AuthenticatedVeiculosRouteWithChildren =
-  AuthenticatedVeiculosRoute._addFileChildren(
-    AuthenticatedVeiculosRouteChildren,
-  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
@@ -367,7 +355,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedQrcodesRoute: typeof AuthenticatedQrcodesRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
-  AuthenticatedVeiculosRoute: typeof AuthenticatedVeiculosRouteWithChildren
+  AuthenticatedVeiculosCodeRoute: typeof AuthenticatedVeiculosCodeRoute
+  AuthenticatedVeiculosIndexRoute: typeof AuthenticatedVeiculosIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -381,7 +370,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedQrcodesRoute: AuthenticatedQrcodesRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
-  AuthenticatedVeiculosRoute: AuthenticatedVeiculosRouteWithChildren,
+  AuthenticatedVeiculosCodeRoute: AuthenticatedVeiculosCodeRoute,
+  AuthenticatedVeiculosIndexRoute: AuthenticatedVeiculosIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
