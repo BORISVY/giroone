@@ -18,6 +18,7 @@ import { AlertTriangle, Car, CheckCircle2, Clock, Gauge, Wrench } from "lucide-r
 import { AppShell } from "@/components/fleet/AppShell";
 import { StatCard } from "@/components/fleet/StatCard";
 import { PeriodPicker } from "@/components/fleet/PeriodPicker";
+import { SortableTable } from "@/components/fleet/SortableTable";
 import { VehicleStatusPill } from "@/components/fleet/StatusPill";
 import { useFleet, EMPTY_FLEET } from "@/hooks/useFleet";
 import { usePeriod } from "@/hooks/usePeriod";
@@ -60,12 +61,6 @@ function Painel() {
     return map;
   }, [fleet.movements]);
 
-  const topKmDrivers = [...a.drivers].filter((d) => d.movements > 0).sort((x, y) => y.km - x.km).slice(0, 5);
-  const bestQuality = [...a.drivers].filter((d) => d.movements >= 1).sort((x, y) => y.quality - x.quality || y.movements - x.movements).slice(0, 5);
-  const worstQuality = [...a.drivers].filter((d) => d.movements >= 1 && d.errorRate > 0).sort((x, y) => y.errorRate - x.errorRate).slice(0, 5);
-  const topUsed = [...a.vehicles].sort((x, y) => y.trips - x.trips).slice(0, 5);
-  const topKmVehicles = [...a.vehicles].sort((x, y) => y.km - x.km).slice(0, 5);
-  const topCostKm = [...a.vehicles].filter((v) => v.km > 0).sort((x, y) => y.costPerKm - x.costPerKm).slice(0, 5);
 
   return (
     <AppShell title="Painel gerencial" description="Resumo executivo da frota no período selecionado">
@@ -78,6 +73,26 @@ function Painel() {
           onFrom={p.setFrom}
           onTo={p.setTo}
         />
+
+        <Panel title="KM percorridos por veículo" subtitle="Clique no título de uma coluna para ordenar">
+          <SortableTable
+            rows={a.vehicles}
+            rowKey={(v) => v.id}
+            searchText={(v) => `${v.label} ${v.plate}`}
+            defaultSort="km"
+            columns={[
+              { key: "label", label: "Veículo", value: (v) => v.label },
+              { key: "plate", label: "Placa", value: (v) => v.plate },
+              { key: "km", label: "KM rodados", align: "right", value: (v) => v.km, render: (v) => fmtKm(v.km) },
+              { key: "trips", label: "Viagens", align: "right", value: (v) => v.trips },
+              { key: "share", label: "% utilizações", align: "right", value: (v) => v.sharePct, render: (v) => fmtPct(v.sharePct, 0) },
+              { key: "avg", label: "Média/viagem", align: "right", value: (v) => v.avgKmPerTrip, render: (v) => fmtKm(v.avgKmPerTrip) },
+              { key: "mcount", label: "Manutenções", align: "right", value: (v) => v.maintenanceCount },
+              { key: "mcost", label: "Gasto", align: "right", value: (v) => v.maintenanceCost, render: (v) => fmtMoney(v.maintenanceCost) },
+              { key: "cpk", label: "Custo/KM", align: "right", value: (v) => v.costPerKm, render: (v) => fmtMoney(v.costPerKm) },
+            ]}
+          />
+        </Panel>
 
         {(a.totals.pendingReturns > 0 || a.totals.pendingIncidents > 0) && (
           <div className="grid gap-3 sm:grid-cols-2">
@@ -162,73 +177,24 @@ function Painel() {
           </Panel>
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-3">
-          <Panel title="Melhor qualidade de lançamento">
-            <RankList
-              items={bestQuality.map((d) => ({
-                key: d.id,
-                title: d.name,
-                sub: `${d.movements} lançamentos · ${d.corrected} corrigidos`,
-                value: fmtPct(d.quality, 0),
-              }))}
-            />
-          </Panel>
-          <Panel title="Maior taxa de erro">
-            <RankList
-              items={worstQuality.map((d) => ({
-                key: d.id,
-                title: d.name,
-                sub: `${d.realErrors} erros em ${d.movements} lançamentos`,
-                value: fmtPct(d.errorRate, 1),
-              }))}
-              emptyText="Nenhum erro registrado no período."
-            />
-          </Panel>
-          <Panel title="Motoristas que mais rodaram">
-            <RankList
-              items={topKmDrivers.map((d) => ({
-                key: d.id,
-                title: d.name,
-                sub: `${d.trips} viagens`,
-                value: fmtKm(d.km),
-              }))}
-            />
-          </Panel>
-        </section>
-
-        <section className="grid gap-4 lg:grid-cols-3">
-          <Panel title="Veículos mais utilizados">
-            <RankList
-              items={topUsed.map((v) => ({
-                key: v.id,
-                title: `${v.label} · ${v.plate}`,
-                sub: `${fmtPct(v.sharePct, 0)} das utilizações`,
-                value: `${v.trips}`,
-              }))}
-            />
-          </Panel>
-          <Panel title="Veículos que mais rodaram">
-            <RankList
-              items={topKmVehicles.map((v) => ({
-                key: v.id,
-                title: `${v.label} · ${v.plate}`,
-                sub: `média de ${fmtKm(v.avgKmPerTrip)} por viagem`,
-                value: fmtKm(v.km),
-              }))}
-            />
-          </Panel>
-          <Panel title="Maior custo por KM">
-            <RankList
-              items={topCostKm.map((v) => ({
-                key: v.id,
-                title: `${v.label} · ${v.plate}`,
-                sub: `${fmtMoney(v.maintenanceCost)} em ${v.maintenanceCount} manutenções`,
-                value: `${fmtMoney(v.costPerKm)}/km`,
-              }))}
-              emptyText="Sem manutenções lançadas no período."
-            />
-          </Panel>
-        </section>
+        <Panel title="Motoristas" subtitle="Clique no título de uma coluna para ordenar">
+          <SortableTable
+            rows={a.drivers.filter((d) => d.movements > 0)}
+            rowKey={(d) => d.id}
+            searchText={(d) => d.name}
+            defaultSort="km"
+            columns={[
+              { key: "name", label: "Motorista", value: (d) => d.name },
+              { key: "km", label: "KM rodados", align: "right", value: (d) => d.km, render: (d) => fmtKm(d.km) },
+              { key: "trips", label: "Viagens", align: "right", value: (d) => d.trips },
+              { key: "movements", label: "Lançamentos", align: "right", value: (d) => d.movements },
+              { key: "corrected", label: "Corrigidos", align: "right", value: (d) => d.corrected },
+              { key: "realErrors", label: "Erros", align: "right", value: (d) => d.realErrors },
+              { key: "errorRate", label: "Taxa de erro", align: "right", value: (d) => d.errorRate, render: (d) => fmtPct(d.errorRate, 1) },
+              { key: "quality", label: "Qualidade", align: "right", value: (d) => d.quality, render: (d) => fmtPct(d.quality, 0) },
+            ]}
+          />
+        </Panel>
 
         <section className="grid gap-4 lg:grid-cols-2">
           <Panel title="Ocorrências por categoria">
