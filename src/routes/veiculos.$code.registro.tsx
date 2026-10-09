@@ -249,7 +249,20 @@ function RegistroPage() {
             <div className="max-h-52 space-y-1.5 overflow-y-auto rounded-lg border border-border p-1.5">
               {filteredDrivers.length === 0 ? (
                 <p className="p-3 text-sm text-muted-foreground">Nenhum motorista encontrado.</p>
-              ) : (
+              ) : null}
+              {newDriverName ? (
+                <button
+                  type="button"
+                  disabled={createDriver.isPending}
+                  onClick={() => createDriver.mutate(newDriverName)}
+                  className="w-full rounded-lg border-2 border-dashed border-primary/50 bg-primary/5 px-3 py-2.5 text-left text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+                >
+                  {createDriver.isPending
+                    ? "Cadastrando..."
+                    : `Cadastrar "${newDriverName}" como novo motorista`}
+                </button>
+              ) : null}
+              {filteredDrivers.length > 0 ? (
                 filteredDrivers.map((d) => (
                   <button
                     key={d.id}
