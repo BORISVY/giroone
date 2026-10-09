@@ -79,9 +79,11 @@ export function useFleet() {
   return useQuery({
     queryKey: ["fleet"],
     queryFn: fetchFleet,
-    staleTime: 15_000,
+    staleTime: 0,
     refetchInterval: 60_000,
-    refetchIntervalInBackground: false,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
   });
 }
 
