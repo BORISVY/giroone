@@ -276,7 +276,7 @@ function RegistroPage() {
                     {d.name}
                   </button>
                 ))
-              )}
+              ) : null}
             </div>
           </div>
 
