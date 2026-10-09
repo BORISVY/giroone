@@ -90,6 +90,32 @@ function RegistroPage() {
     return q ? list.filter((d) => d.name.toLowerCase().includes(q)) : list;
   }, [data?.drivers, search]);
 
+  const newDriverName = useMemo(() => {
+    const q = search.trim().replace(/\s+/g, " ");
+    if (q.length < 3 || !q.includes(" ")) return null;
+    const list = data?.drivers ?? [];
+    if (list.some((d) => d.name.trim().toLowerCase() === q.toLowerCase())) return null;
+    return q
+      .split(" ")
+      .map((w) => (w ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w))
+      .join(" ");
+  }, [search, data?.drivers]);
+
+  const createDriver = useMutation({
+    mutationFn: async (name: string) => {
+      const { data: id, error } = await supabase.rpc("ensure_driver", { p_name: name });
+      if (error) throw new Error(error.message);
+      return id as string;
+    },
+    onSuccess: (id, name) => {
+      setDriverId(id);
+      setSearch("");
+      qc.invalidateQueries({ queryKey: ["registro", code] });
+      toast.success(`Motorista ${name} cadastrado!`);
+    },
+    onError: () => toast.error("Informe nome e sobrenome para cadastrar o motorista."),
+  });
+
   const openDriverName = openTrip
     ? (data?.drivers.find((d) => d.id === openTrip.driver_id)?.name ?? "Motorista")
     : null;
