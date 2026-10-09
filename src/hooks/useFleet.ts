@@ -76,7 +76,13 @@ async function fetchFleet(): Promise<FleetDataset> {
 }
 
 export function useFleet() {
-  return useQuery({ queryKey: ["fleet"], queryFn: fetchFleet, staleTime: 15_000 });
+  return useQuery({
+    queryKey: ["fleet"],
+    queryFn: fetchFleet,
+    staleTime: 15_000,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+  });
 }
 
 export const EMPTY_FLEET: FleetDataset = {
