@@ -90,6 +90,32 @@ function RegistroPage() {
     return q ? list.filter((d) => d.name.toLowerCase().includes(q)) : list;
   }, [data?.drivers, search]);
 
+  const newDriverName = useMemo(() => {
+    const q = search.trim().replace(/\s+/g, " ");
+    if (q.length < 3 || !q.includes(" ")) return null;
+    const list = data?.drivers ?? [];
+    if (list.some((d) => d.name.trim().toLowerCase() === q.toLowerCase())) return null;
+    return q
+      .split(" ")
+      .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w))
+      .join(" ");
+  }, [search, data?.drivers]);
+
+  const createDriver = useMutation({
+    mutationFn: async (name: string) => {
+      const { data: id, error } = await supabase.rpc("ensure_driver", { p_name: name });
+      if (error) throw new Error(error.message);
+      return id as string;
+    },
+    onSuccess: (id, name) => {
+      setDriverId(id);
+      setSearch("");
+      qc.invalidateQueries({ queryKey: ["registro", code] });
+      toast.success(`Motorista ${name} cadastrado!`);
+    },
+    onError: () => toast.error("Informe nome e sobrenome para cadastrar o motorista."),
+  });
+
   const openDriverName = openTrip
     ? (data?.drivers.find((d) => d.id === openTrip.driver_id)?.name ?? "Motorista")
     : null;
@@ -223,7 +249,20 @@ function RegistroPage() {
             <div className="max-h-52 space-y-1.5 overflow-y-auto rounded-lg border border-border p-1.5">
               {filteredDrivers.length === 0 ? (
                 <p className="p-3 text-sm text-muted-foreground">Nenhum motorista encontrado.</p>
-              ) : (
+              ) : null}
+              {newDriverName ? (
+                <button
+                  type="button"
+                  disabled={createDriver.isPending}
+                  onClick={() => createDriver.mutate(newDriverName)}
+                  className="w-full rounded-lg border-2 border-dashed border-primary/50 bg-primary/5 px-3 py-2.5 text-left text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+                >
+                  {createDriver.isPending
+                    ? "Cadastrando..."
+                    : `Cadastrar "${newDriverName}" como novo motorista`}
+                </button>
+              ) : null}
+              {filteredDrivers.length > 0 ? (
                 filteredDrivers.map((d) => (
                   <button
                     key={d.id}
@@ -237,7 +276,7 @@ function RegistroPage() {
                     {d.name}
                   </button>
                 ))
-              )}
+              ) : null}
             </div>
           </div>
 
