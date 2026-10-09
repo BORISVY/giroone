@@ -97,7 +97,7 @@ function RegistroPage() {
     if (list.some((d) => d.name.trim().toLowerCase() === q.toLowerCase())) return null;
     return q
       .split(" ")
-      .map((w) => (w ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w))
+      .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w))
       .join(" ");
   }, [search, data?.drivers]);
 
