@@ -41,12 +41,20 @@ export const Route = createFileRoute("/_authenticated/painel")({
 const CHART_COLORS = ["var(--color-chart-1)", "var(--color-chart-2)", "var(--color-chart-3)", "var(--color-chart-4)", "var(--color-chart-5)"];
 
 function Painel() {
-  const { data, isLoading } = useFleet();
+  const { data, isLoading, dataUpdatedAt, isFetching, refetch } = useFleet();
   const p = usePeriod("tudo");
   const fleet = data ?? EMPTY_FLEET;
   const { data: settings } = useSettings();
   const tolerance = settings?.trip_tolerance_hours ?? DEFAULT_SETTINGS.trip_tolerance_hours;
-  const a = useMemo(() => buildAnalytics(fleet, p.range, tolerance), [fleet, p.range, tolerance]);
+  // Recalcula o período a cada atualização para incluir lançamentos novos
+  const range = useMemo(() => {
+    const r = { ...p.range };
+    const end = new Date(Math.max(r.to.getTime(), Date.now()));
+    if (p.period !== "custom" && p.period !== "mes_anterior") end.setHours(23, 59, 59, 999);
+    return { from: r.from, to: p.period === "custom" || p.period === "mes_anterior" ? r.to : end };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p.range, p.period, dataUpdatedAt]);
+  const a = useMemo(() => buildAnalytics(fleet, range, tolerance), [fleet, range, tolerance]);
 
   // KM atual de cada veículo = KM do lançamento mais recente (saída ou retorno)
   const currentKmByVehicle = useMemo(() => {
@@ -73,6 +81,15 @@ function Painel() {
           onFrom={p.setFrom}
           onTo={p.setTo}
         />
+        <div className="flex items-center justify-end gap-3 text-xs text-muted-foreground">
+          <span>
+            {isFetching ? "Atualizando…" : dataUpdatedAt ? `Atualizado às ${new Date(dataUpdatedAt).toLocaleTimeString("pt-BR")} · atualiza a cada 1 min` : ""}
+          </span>
+          <button type="button" onClick={() => refetch()} className="rounded-md border border-border px-2 py-1 hover:bg-muted">
+            Atualizar agora
+          </button>
+        </div>
+
 
         <Panel title="KM percorridos por veículo" subtitle="Clique no título de uma coluna para ordenar">
           <SortableTable
