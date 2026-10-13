@@ -224,6 +224,8 @@ function Manutencoes() {
           onClick={() => {
             setEditingId(null);
             setForm(EMPTY);
+            setTypeText("");
+            setProviderText("");
             setOpen(true);
           }}
         >
@@ -395,33 +397,21 @@ function Manutencoes() {
             </div>
             <div className="space-y-1.5">
               <Label>Tipo de serviço</Label>
-              <Select value={form.type_id} onValueChange={(v) => set("type_id", v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {fleet.maintenanceTypes.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input list="mtypes-list" value={typeText} onChange={(e) => setTypeText(e.target.value)} placeholder="Selecione ou digite um novo" />
+              <datalist id="mtypes-list">
+                {fleet.maintenanceTypes.map((t) => (
+                  <option key={t.id} value={t.name} />
+                ))}
+              </datalist>
             </div>
             <div className="space-y-1.5">
               <Label>Fornecedor</Label>
-              <Select value={form.provider_id} onValueChange={(v) => set("provider_id", v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {fleet.providers.map((x) => (
-                    <SelectItem key={x.id} value={x.id}>
-                      {x.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input list="providers-list" value={providerText} onChange={(e) => setProviderText(e.target.value)} placeholder="Selecione ou digite um novo" />
+              <datalist id="providers-list">
+                {fleet.providers.map((x) => (
+                  <option key={x.id} value={x.name} />
+                ))}
+              </datalist>
             </div>
             <div className="space-y-1.5">
               <Label>Natureza</Label>
