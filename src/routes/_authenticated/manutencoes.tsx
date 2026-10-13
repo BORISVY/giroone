@@ -45,6 +45,15 @@ const EMPTY = {
   notes: "",
 };
 
+function fmtTypeName(s: string) {
+  const t = s.trim().replace(/\s+/g, " ").toLowerCase();
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : "";
+}
+
+function fmtProviderName(s: string) {
+  return s.trim().replace(/\s+/g, " ").toUpperCase();
+}
+
 function Manutencoes() {
   const { data } = useFleet();
   const fleet = data ?? EMPTY_FLEET;
@@ -56,6 +65,8 @@ function Manutencoes() {
   const [form, setForm] = useState(EMPTY);
   const [typeName, setTypeName] = useState("");
   const [providerName, setProviderName] = useState("");
+  const [typeText, setTypeText] = useState("");
+  const [providerText, setProviderText] = useState("");
 
   const set = (k: keyof typeof EMPTY, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -75,6 +86,8 @@ function Manutencoes() {
 
   function openEdit(m: (typeof rows)[number]) {
     setEditingId(m.id);
+    setTypeText(fleet.maintenanceTypes.find((t) => t.id === m.type_id)?.name ?? "");
+    setProviderText(fleet.providers.find((x) => x.id === m.provider_id)?.name ?? "");
     setForm({
       vehicle_id: m.vehicle_id,
       type_id: m.type_id ?? "",
@@ -91,10 +104,40 @@ function Manutencoes() {
 
   const save = useMutation({
     mutationFn: async () => {
+      const tName = fmtTypeName(typeText);
+      const pName = fmtProviderName(providerText);
+      let type_id: string | null = null;
+      let provider_id: string | null = null;
+      if (tName) {
+        const ex = fleet.maintenanceTypes.find((t) => t.name.trim().toLowerCase() === tName.toLowerCase());
+        if (ex) type_id = ex.id;
+        else {
+          const { data: d, error } = await supabase
+            .from("maintenance_types")
+            .insert({ name: tName, kind: form.kind as "preventiva" | "corretiva" })
+            .select("id")
+            .single();
+          if (error) throw new Error(error.message);
+          type_id = d.id;
+        }
+      }
+      if (pName) {
+        const ex = fleet.providers.find((x) => x.name.trim().toUpperCase() === pName);
+        if (ex) provider_id = ex.id;
+        else {
+          const { data: d, error } = await supabase
+            .from("service_providers")
+            .insert({ name: pName })
+            .select("id")
+            .single();
+          if (error) throw new Error(error.message);
+          provider_id = d.id;
+        }
+      }
       const payload = {
         vehicle_id: form.vehicle_id,
-        type_id: form.type_id || null,
-        provider_id: form.provider_id || null,
+        type_id,
+        provider_id,
         kind: form.kind as "preventiva" | "corretiva",
         performed_at: form.performed_at,
         amount: Number(form.amount || 0),
