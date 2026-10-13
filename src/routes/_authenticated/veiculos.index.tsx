@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useFleet, EMPTY_FLEET } from "@/hooks/useFleet";
+import { useAccess } from "@/hooks/useAccess";
+import { Textarea } from "@/components/ui/textarea";
 import { fmtKm, type Vehicle, type VehicleStatus } from "@/lib/fleet";
 
 export const Route = createFileRoute("/_authenticated/veiculos/")({
@@ -45,6 +47,10 @@ function Veiculos() {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY);
+  const { isAdmin } = useAccess();
+  const [statusFor, setStatusFor] = useState<Vehicle | null>(null);
+  const [newStatus, setNewStatus] = useState<VehicleStatus>("disponivel");
+  const [statusNote, setStatusNote] = useState("");
 
   // KM atual de cada veículo = KM do lançamento mais recente (saída ou retorno)
   const currentKmByVehicle = useMemo(() => {
@@ -100,6 +106,42 @@ function Veiculos() {
     onSuccess: () => {
       toast.success("Veículo excluído.");
       qc.invalidateQueries({ queryKey: ["fleet"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const changeStatus = useMutation({
+    mutationFn: async () => {
+      if (!statusFor) return;
+      const note = statusNote.trim();
+      const { data: auth } = await supabase.auth.getUser();
+      let actor = auth.user?.email ?? null;
+      if (auth.user) {
+        const { data: p } = await supabase.from("profiles").select("name").eq("id", auth.user.id).maybeSingle();
+        if (p?.name) actor = p.name;
+      }
+      const res = await supabase
+        .from("vehicles")
+        .update({ status: newStatus })
+        .eq("id", statusFor.id);
+      if (res.error) throw new Error(res.error.message);
+      const log = await supabase.from("audit_logs").insert({
+        entity: "vehicle",
+        entity_id: statusFor.id,
+        action: "status_change",
+        field: "status",
+        old_value: statusFor.status,
+        new_value: newStatus,
+        reason: note,
+        actor_name: actor,
+      });
+      if (log.error) throw new Error(log.error.message);
+    },
+    onSuccess: () => {
+      toast.success("Status alterado e registrado no histórico.");
+      setStatusFor(null);
+      qc.invalidateQueries({ queryKey: ["fleet"] });
+      qc.invalidateQueries({ queryKey: ["status-log"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -160,6 +202,19 @@ function Veiculos() {
               <Button size="sm" variant="ghost" onClick={() => edit(v)}>
                 Editar
               </Button>
+              {isAdmin ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setStatusFor(v);
+                    setNewStatus(v.status === "em_uso" ? "disponivel" : "em_uso");
+                    setStatusNote("");
+                  }}
+                >
+                  Status
+                </Button>
+              ) : null}
               <Button
                 size="sm"
                 variant="ghost"
@@ -220,6 +275,47 @@ function Veiculos() {
               Cancelar
             </Button>
             <Button onClick={() => save.mutate()} disabled={save.isPending || !form.code || !form.plate}>
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!statusFor} onOpenChange={(o) => !o && setStatusFor(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Alterar status · {statusFor?.plate}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Novo status</Label>
+              <Select value={newStatus} onValueChange={(v) => setNewStatus(v as VehicleStatus)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="disponivel">Disponível</SelectItem>
+                  <SelectItem value="em_uso">Ocupado (em uso)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Observação (obrigatória)</Label>
+              <Textarea
+                value={statusNote}
+                onChange={(e) => setStatusNote(e.target.value)}
+                placeholder="Explique o motivo da alteração"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStatusFor(null)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => changeStatus.mutate()}
+              disabled={changeStatus.isPending || statusNote.trim().length < 3}
+            >
               Salvar
             </Button>
           </DialogFooter>

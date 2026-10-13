@@ -1,5 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+const STATUS_LABEL: Record<string, string> = {
+  disponivel: "Disponível",
+  em_uso: "Em uso",
+  manutencao: "Manutenção",
+  inativo: "Inativo",
+};
 import { AppShell } from "@/components/fleet/AppShell";
 import { StatCard } from "@/components/fleet/StatCard";
 import { IncidentStatusPill, MovementTypePill, VehicleStatusPill } from "@/components/fleet/StatusPill";
@@ -23,6 +32,22 @@ function VeiculoDetalhe() {
   const { data } = useFleet();
   const fleet = data ?? EMPTY_FLEET;
   const vehicle = fleet.vehicles.find((v) => v.code === code);
+  const { data: statusLog } = useQuery({
+    queryKey: ["status-log", vehicle?.id],
+    enabled: !!vehicle,
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("audit_logs")
+        .select("*")
+        .eq("entity", "vehicle")
+        .eq("field", "status")
+        .eq("entity_id", vehicle!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  });
 
   const info = useMemo(() => {
     if (!vehicle) return null;
@@ -103,6 +128,20 @@ function VeiculoDetalhe() {
             </div>
           ))}
           {info.maint.length === 0 ? <Empty /> : null}
+        </Section>
+
+        <Section title="Alterações de status">
+          {(statusLog ?? []).map((l) => (
+            <div key={l.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 py-2 text-sm last:border-0">
+              <span className="whitespace-nowrap font-semibold">
+                {STATUS_LABEL[l.old_value ?? ""] ?? l.old_value ?? "—"} → {STATUS_LABEL[l.new_value ?? ""] ?? l.new_value}
+              </span>
+              <span className="flex-1 text-muted-foreground">{l.reason ?? "—"}</span>
+              <span className="text-xs text-muted-foreground">{l.actor_name ?? "—"}</span>
+              <span className="whitespace-nowrap text-xs text-muted-foreground">{fmtDateTime(l.created_at)}</span>
+            </div>
+          ))}
+          {(statusLog ?? []).length === 0 ? <Empty /> : null}
         </Section>
       </div>
     </AppShell>
